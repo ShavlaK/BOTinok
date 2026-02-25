@@ -209,45 +209,94 @@ install_python() {
 }
 
 # =============================================================================
-# Установка 3X-UI панели
+# Установка 3X-UI панели (АВТОМАТИЧЕСКИ)
 # =============================================================================
 install_xui() {
     log "Установка 3X-UI панели..."
-    
+
     # Проверяем установлена ли панель
     if [ -f /usr/local/x-ui/x-ui ]; then
         log_success "3X-UI уже установлена"
         return 0
     fi
-    
-    # Загружаем и устанавливаем
-    bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh)
-    
-    # Настраиваем порт и учётные данные
-    XUI_PORT=$((RANDOM % 10000 + 10000))
+
+    # Генерируем безопасные параметры
+    XUI_PORT=$((RANDOM % 10000 + 10000))  # Порт 10000-20000
     XUI_USERNAME="admin$(shuf -i 1000-9999 -n 1)"
-    XUI_PASSWORD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 12 | head -n 1)
+    XUI_PASSWORD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 16 | head -n 1)
     
+    # SSL порт для Let's Encrypt
+    SSL_PORT=80
+    
+    log "Генерация параметров..."
+    log "  Порт панели: $XUI_PORT"
+    log "  Пользователь: $XUI_USERNAME"
+    log "  Пароль: ******"
+    log "  SSL порт: $SSL_PORT"
+
+    # Автоматическая установка с предопределёнными ответями
+    export XUI_PANEL_PORT=$XUI_PORT
+    
+    # Скачиваем скрипт установки
+    curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh > /tmp/x-ui-install.sh
+    chmod +x /tmp/x-ui-install.sh
+    
+    # Автоматическая установка (без вопросов)
+    echo "" | /tmp/x-ui-install.sh
+    
+    # Настраиваем параметры
     /usr/local/x-ui/x-ui setting -username $XUI_USERNAME -password $XUI_PASSWORD -port $XUI_PORT
     
+    # Настраиваем SSL (автоматически, IP сертификат)
+    log "Настройка SSL сертификата..."
+    
+    # Открываем порт 80 временно для SSL
+    ufw allow 80/tcp 2>/dev/null || true
+    
+    # Устанавливаем acme.sh для SSL
+    if ! command -v ~/.acme.sh/acme.sh &> /dev/null; then
+        curl https://get.acme.sh | sh &>/dev/null
+        source ~/.bashrc
+    fi
+    
+    # Получаем внешний IP
+    EXTERNAL_IP=$(curl -s ifconfig.me)
+    
+    # Создаём SSL сертификат для IP
+    ~/.acme.sh/acme.sh --issue --standalone -d $EXTERNAL_IP --listen-v4 --force &>/dev/null
+    
+    # Устанавливаем сертификат
+    ~/.acme.sh/acme.sh --install-cert -d $EXTERNAL_IP \
+        --key-file       /root/private.key  \
+        --fullchain-file /root/cert.crt
+    
+    # Закрываем порт 80
+    ufw deny 80/tcp 2>/dev/null || true
+    
+    # Очищаем
+    rm -f /tmp/x-ui-install.sh
+
     # Сохраняем учётные данные
     cat > $INSTALL_DIR/xui_credentials.txt << EOF
-════════════════════════════════════════
-  3X-UI PANEL CREDENTIALS
-════════════════════════════════════════
-  URL:      http://$(curl -s ifconfig.me):$XUI_PORT
+════════════════════════════════════════════════════════
+  🔐 3X-UI PANEL CREDENTIALS
+════════════════════════════════════════════════════════
+  URL:      https://$EXTERNAL_IP:$XUI_PORT
   Username: $XUI_USERNAME
   Password: $XUI_PASSWORD
-════════════════════════════════════════
+  
+  ⚠️  СОХРАНИТЕ ЭТИ ДАННЫЕ!
+════════════════════════════════════════════════════════
 EOF
-    
+
     log_success "3X-UI установлена"
-    log "Учётные данные сохранены в: $INSTALL_DIR/xui_credentials.txt"
-    
+    log "🔐 Учётные данные сохранены в: $INSTALL_DIR/xui_credentials.txt"
+
     # Экспортируем для использования в боте
     export XUI_PORT=$XUI_PORT
     export XUI_USERNAME=$XUI_USERNAME
     export XUI_PASSWORD=$XUI_PASSWORD
+    export EXTERNAL_IP=$EXTERNAL_IP
 }
 
 # =============================================================================
@@ -470,9 +519,11 @@ start_bot() {
 }
 
 # =============================================================================
-# Вывод итогов
+# Вывод итогов (ПОДРОБНАЯ ИНСТРУКЦИЯ)
 # =============================================================================
 print_summary() {
+    EXTERNAL_IP=$(curl -s ifconfig.me)
+    
     echo ""
     echo "╔═══════════════════════════════════════════════════════╗"
     echo "║                                                       ║"
@@ -482,26 +533,73 @@ print_summary() {
     echo ""
     echo "📁 Директория установки: $INSTALL_DIR"
     echo ""
-    echo "🔧 Команды управления:"
-    echo "   systemctl status bot     - Статус бота"
-    echo "   systemctl restart bot    - Перезапуск бота"
-    echo "   systemctl stop bot       - Остановка бота"
-    echo "   journalctl -u bot -f     - Логи бота"
+    echo "═══════════════════════════════════════════════════════"
+    echo "  🎯 СЛЕДУЮЩИЕ ШАГИ (ВЫПОЛНИТЬ ПОСЛЕДОВАТЕЛЬНО)"
+    echo "═══════════════════════════════════════════════════════"
     echo ""
-    echo "📝 Следующие шаги:"
-    echo "   1. Отредактируйте $INSTALL_DIR/.env"
-    echo "   2. Укажите TOKEN_MAIN и MY_ID_TELEG"
-    echo "   3. Перезапустите бота: systemctl restart bot"
-    echo "   4. Запустите бота: /start"
+    echo "📝 ШАГ 1: Откройте файл конфигурации"
+    echo "───────────────────────────────────────────────────────"
+    echo "   nano $INSTALL_DIR/.env"
     echo ""
+    echo "📝 ШАГ 2: Укажите обязательные параметры"
+    echo "───────────────────────────────────────────────────────"
+    echo "   TOKEN_MAIN='ваш_токен_бота'     # Получить в @BotFather"
+    echo "   MY_ID_TELEG=ваш_id              # Узнать в @userinfobot"
+    echo ""
+    echo "   Пример:"
+    echo "   TOKEN_MAIN='1234567890:ABCdefGHIjklMNOpqrsTUVwxyz'"
+    echo "   MY_ID_TELEG=123456789"
+    echo ""
+    echo "📝 ШАГ 3: Сохраните файл"
+    echo "───────────────────────────────────────────────────────"
+    echo "   Ctrl+O → Enter → Ctrl+X"
+    echo ""
+    echo "📝 ШАГ 4: Перезапустите бота"
+    echo "───────────────────────────────────────────────────────"
+    echo "   systemctl restart bot"
+    echo ""
+    echo "📝 ШАГ 5: Проверьте статус"
+    echo "───────────────────────────────────────────────────────"
+    echo "   systemctl status bot"
+    echo ""
+    echo "📝 ШАГ 6: Запустите бота в Telegram"
+    echo "───────────────────────────────────────────────────────"
+    echo "   Откройте бота и нажмите /start"
+    echo ""
+    echo "═══════════════════════════════════════════════════════"
+    echo "  🔐 3X-UI ПАНЕЛЬ (УПРАВЛЕНИЕ КЛЮЧАМИ)"
+    echo "═══════════════════════════════════════════════════════"
     
     if [ -f $INSTALL_DIR/xui_credentials.txt ]; then
-        echo "🔐 3X-UI панель:"
-        cat $INSTALL_DIR/xui_credentials.txt
         echo ""
+        cat $INSTALL_DIR/xui_credentials.txt
     fi
     
-    echo "📚 Документация: https://github.com/ShavlaK/BOTinok"
+    echo ""
+    echo "═══════════════════════════════════════════════════════"
+    echo "  🔧 КОМАНДЫ УПРАВЛЕНИЯ БОТОМ"
+    echo "═══════════════════════════════════════════════════════"
+    echo ""
+    echo "   systemctl status bot      - Статус бота"
+    echo "   systemctl restart bot     - Перезапуск"
+    echo "   systemctl stop bot        - Остановка"
+    echo "   systemctl start bot       - Запуск"
+    echo "   journalctl -u bot -f      - Логи в реальном времени"
+    echo "   tail -f $INSTALL_DIR/logs/bot_*.log - Логи бота"
+    echo ""
+    echo "═══════════════════════════════════════════════════════"
+    echo "  📚 ДОПОЛНИТЕЛЬНАЯ ИНФОРМАЦИЯ"
+    echo "═══════════════════════════════════════════════════════"
+    echo ""
+    echo "   GitHub:      https://github.com/ShavlaK/BOTinok"
+    echo "   Документация: https://github.com/ShavlaK/BOTinok#readme"
+    echo ""
+    echo "═══════════════════════════════════════════════════════"
+    echo ""
+    echo "💡 СОВЕТ: После настройки бота, добавьте сервер через:"
+    echo "   /add_server в Telegram боте"
+    echo ""
+    echo "✅ Всё готово к использованию!"
     echo ""
 }
 
