@@ -5,7 +5,7 @@
 [![Python](https://img.shields.io/badge/python-3.11-yellow.svg)](https://www.python.org/)
 [![Telegram](https://img.shields.io/badge/Telegram-Bot-blue.svg)](https://t.me/your_bot)
 
-> **Автоматическая установка BOT бота для Telegram с 3X-UI панелью**
+> **Автоматическая установка бота для Telegram с 3X-UI панелью**
 
 ---
 
