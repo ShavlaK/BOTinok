@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # =============================================================================
-# BOT Bot - Lite версия для слабых серверов
+# BOTinok - Lite версия для слабых серверов
 # =============================================================================
 # Версия: 1.0
 # Описание: Облегчённая установка для серверов с 512MB-1GB RAM
@@ -49,7 +49,7 @@ show_banner() {
     echo -e "${CYAN}"
     echo "╔═══════════════════════════════════════════════════════╗"
     echo "║                                                       ║"
-    echo "║        🚀 BOT Bot Lite - Для слабых серверов          ║"
+    echo "║        🚀 BOTinok Lite - Для слабых серверов          ║"
     echo "║                                                       ║"
     echo "║  Версия: $VERSION                                     ║"
     echo "║  RAM: 512MB - 1GB                                     ║"
@@ -259,7 +259,7 @@ create_env() {
     
     cat > $INSTALL_DIR/.env << EOF
 # =============================================================================
-# BOT Bot Configuration - LITE VERSION
+# BOTinok Configuration - LITE VERSION
 # =============================================================================
 
 # Токен бота
@@ -319,7 +319,7 @@ create_service() {
     
     cat > /etc/systemd/system/$BOT_SERVICE_NAME.service << EOF
 [Unit]
-Description=BOT Bot Service (Lite)
+Description=BOTinok Service (Lite)
 After=network.target
 
 [Service]
