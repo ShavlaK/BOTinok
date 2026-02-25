@@ -209,7 +209,7 @@ install_python() {
 }
 
 # =============================================================================
-# Установка 3X-UI панели (АВТОМАТИЧЕСКИ)
+# Установка 3X-UI панели (ПОЛНОСТЬЮ АВТОМАТИЧЕСКИ)
 # =============================================================================
 install_xui() {
     log "Установка 3X-UI панели..."
@@ -217,6 +217,9 @@ install_xui() {
     # Проверяем установлена ли панель
     if [ -f /usr/local/x-ui/x-ui ]; then
         log_success "3X-UI уже установлена"
+        # Получаем существующие параметры
+        XUI_PORT=$(/usr/local/x-ui/x-ui setting -show 2>/dev/null | grep "Port" | awk '{print $2}')
+        XUI_USERNAME=$(/usr/local/x-ui/x-ui setting -show 2>/dev/null | grep "Username" | awk '{print $2}')
         return 0
     fi
 
@@ -224,64 +227,62 @@ install_xui() {
     XUI_PORT=$((RANDOM % 10000 + 10000))  # Порт 10000-20000
     XUI_USERNAME="admin$(shuf -i 1000-9999 -n 1)"
     XUI_PASSWORD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 16 | head -n 1)
-    
-    # SSL порт для Let's Encrypt
-    SSL_PORT=80
+    XUI_BASE_PATH=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)
     
     log "Генерация параметров..."
     log "  Порт панели: $XUI_PORT"
     log "  Пользователь: $XUI_USERNAME"
     log "  Пароль: ******"
-    log "  SSL порт: $SSL_PORT"
+    log "  Base Path: /$XUI_BASE_PATH"
 
-    # Автоматическая установка с предопределёнными ответями
-    export XUI_PANEL_PORT=$XUI_PORT
-    
-    # Скачиваем скрипт установки
+    # Скачиваем установщик 3X-UI
     curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh > /tmp/x-ui-install.sh
     chmod +x /tmp/x-ui-install.sh
     
-    # Автоматическая установка (без вопросов)
-    echo "" | /tmp/x-ui-install.sh
+    # Устанавливаем с переменными окружения (полностью автоматически)
+    export XUI_PANEL_PORT=$XUI_PORT
+    export XUI_PANEL_USERNAME=$XUI_USERNAME
+    export XUI_PANEL_PASSWORD=$XUI_PASSWORD
+    export XUI_PANEL_BASE_PATH=$XUI_BASE_PATH
     
-    # Настраиваем параметры
-    /usr/local/x-ui/x-ui setting -username $XUI_USERNAME -password $XUI_PASSWORD -port $XUI_PORT
+    # Автоматическая установка (перенаправляем весь ввод)
+    yes "" | bash /tmp/x-ui-install.sh >/dev/null 2>&1
     
+    # Очищаем
+    rm -f /tmp/x-ui-install.sh
+    unset XUI_PANEL_PORT XUI_PANEL_USERNAME XUI_PANEL_PASSWORD XUI_PANEL_BASE_PATH
+
     # Настраиваем SSL (автоматически, IP сертификат)
     log "Настройка SSL сертификата..."
     
-    # Открываем порт 80 временно для SSL
-    ufw allow 80/tcp 2>/dev/null || true
+    # Получаем внешний IP
+    EXTERNAL_IP=$(curl -s ifconfig.me)
+    log "  Внешний IP: $EXTERNAL_IP"
     
-    # Устанавливаем acme.sh для SSL
+    # Устанавливаем acme.sh для SSL (если нет)
     if ! command -v ~/.acme.sh/acme.sh &> /dev/null; then
         curl https://get.acme.sh | sh &>/dev/null
         source ~/.bashrc
     fi
     
-    # Получаем внешний IP
-    EXTERNAL_IP=$(curl -s ifconfig.me)
-    
     # Создаём SSL сертификат для IP
     ~/.acme.sh/acme.sh --issue --standalone -d $EXTERNAL_IP --listen-v4 --force &>/dev/null
     
-    # Устанавливаем сертификат
+    # Устанавливаем сертификат в 3X-UI
     ~/.acme.sh/acme.sh --install-cert -d $EXTERNAL_IP \
         --key-file       /root/private.key  \
-        --fullchain-file /root/cert.crt
+        --fullchain-file /root/cert.crt \
+        --reloadcmd     "systemctl force-reload x-ui" &>/dev/null
     
-    # Закрываем порт 80
-    ufw deny 80/tcp 2>/dev/null || true
-    
-    # Очищаем
-    rm -f /tmp/x-ui-install.sh
+    # Настраиваем 3X-UI на использование сертификата
+    /usr/local/x-ui/x-ui cert -s &>/dev/null
 
     # Сохраняем учётные данные
     cat > $INSTALL_DIR/xui_credentials.txt << EOF
 ════════════════════════════════════════════════════════
   🔐 3X-UI PANEL CREDENTIALS
 ════════════════════════════════════════════════════════
-  URL:      https://$EXTERNAL_IP:$XUI_PORT
+  URL:      https://$EXTERNAL_IP:$XUI_PORT/$XUI_BASE_PATH
   Username: $XUI_USERNAME
   Password: $XUI_PASSWORD
   
@@ -297,6 +298,7 @@ EOF
     export XUI_USERNAME=$XUI_USERNAME
     export XUI_PASSWORD=$XUI_PASSWORD
     export EXTERNAL_IP=$EXTERNAL_IP
+    export XUI_BASE_PATH=$XUI_BASE_PATH
 }
 
 # =============================================================================
