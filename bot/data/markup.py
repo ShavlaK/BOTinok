@@ -9,12 +9,12 @@ from aiogram.types import ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeybo
 #       если необходимо добавить кнопки в разные строки, то нужно использовать несколько функций .add(), пример: klav.add(but_test_key).add(but_connect)
 #############################
 
-async def fun_klav_start(user, NAME_VPN_CONFIG):
+async def fun_klav_start(user, NAME_BOT_CONFIG):
     klav = ReplyKeyboardMarkup(resize_keyboard=True,row_width=2)
     if not user.isGetTestKey:
         klav.add(user.lang.get('but_test_key'))
     klav.add(user.lang.get('but_connect'), user.lang.get('but_my_keys'), user.lang.get('but_change_protocol'), user.lang.get('but_change_location'))
-    klav.add(user.lang.get('but_ref'), user.lang.get('but_desription').format(name_config=NAME_VPN_CONFIG), user.lang.get('but_donate'), user.lang.get('but_change_language'), user.lang.get('but_help'), user.lang.get('but_partner'))
+    klav.add(user.lang.get('but_ref'), user.lang.get('but_desription').format(name_config=NAME_BOT_CONFIG), user.lang.get('but_donate'), user.lang.get('but_change_language'), user.lang.get('but_help'), user.lang.get('but_partner'))
     return klav
 
 async def fun_klav_buy_days(user):
@@ -57,7 +57,7 @@ async def fun_klav_podkl_no_back(user, buttons_podkl):
     return ReplyKeyboardMarkup(resize_keyboard=True, row_width=3).add(*buttons_podkl).add(user.lang.get('but_main'))
 
 async def fun_klav_help(user):
-    return ReplyKeyboardMarkup(resize_keyboard=True, row_width=1).add(user.lang.get('but_how_podkl')).add(user.lang.get('but_no_work_vpn')).add(user.lang.get('but_manager')).add(user.lang.get('but_polz_sogl'), user.lang.get('but_pravila')).add(user.lang.get('but_main'))
+    return ReplyKeyboardMarkup(resize_keyboard=True, row_width=1).add(user.lang.get('but_how_podkl')).add(user.lang.get('but_no_work_bot')).add(user.lang.get('but_manager')).add(user.lang.get('but_polz_sogl'), user.lang.get('but_pravila')).add(user.lang.get('but_main'))
 
 async def fun_klav_donats(user):
     return ReplyKeyboardMarkup(resize_keyboard=True, row_width=3).add(*user.buttons_Donate).add(user.lang.get('but_donaters'), user.lang.get('but_main'))

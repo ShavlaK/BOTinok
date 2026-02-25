@@ -45,7 +45,7 @@ BOTinok-project/
 
 ```bash
 # Перейдите в директорию проекта
-cd /Users/shavlak/Desktop/vpn_bot/BOTinok-project
+cd /Users/shavlak/Desktop/bot_bot/BOTinok-project
 
 # Инициализируйте Git
 git init
@@ -137,7 +137,7 @@ https://github.com/new
 ### 2. Загрузите файлы
 
 ```bash
-cd /Users/shavlak/Desktop/vpn_bot/BOTinok-project
+cd /Users/shavlak/Desktop/bot_bot/BOTinok-project
 git init
 git add .
 git commit -m "Initial commit"

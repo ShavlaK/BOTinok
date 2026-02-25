@@ -1,5 +1,5 @@
 [Unit]
-Description=BOTinok - VPN Bot Service
+Description=BOTinok - BOT Bot Service
 After=network.target
 Wants=network-online.target
 
@@ -8,8 +8,8 @@ Wants=network-online.target
 [Service]
 Type=simple
 User=root
-WorkingDirectory=/root/vpn-bot
-ExecStart=/usr/local/bin/python3.11 /root/vpn-bot/bot.py
+WorkingDirectory=/root/bot-bot
+ExecStart=/usr/local/bin/python3.11 /root/bot-bot/bot.py
 Restart=always
 RestartSec=10
 RestartPreventExitStatus=1
@@ -21,7 +21,7 @@ Environment=PYTHONIOENCODING=utf-8
 # Логирование
 StandardOutput=journal
 StandardError=journal
-SyslogIdentifier=vpn-bot
+SyslogIdentifier=bot-bot
 
 # Лимиты ресурсов
 LimitNOFILE=65535
@@ -34,7 +34,7 @@ IOSchedulingPriority=0
 NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=read-only
-ReadWritePaths=/root/vpn-bot/data /root/vpn-bot/logs
+ReadWritePaths=/root/bot-bot/data /root/bot-bot/logs
 
 # Memory limits
 MemoryLimit=1G

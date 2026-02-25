@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # =============================================================================
-# VPN Bot - Lite версия для слабых серверов
+# BOT Bot - Lite версия для слабых серверов
 # =============================================================================
 # Версия: 1.0
 # Описание: Облегчённая установка для серверов с 512MB-1GB RAM
@@ -49,7 +49,7 @@ show_banner() {
     echo -e "${CYAN}"
     echo "╔═══════════════════════════════════════════════════════╗"
     echo "║                                                       ║"
-    echo "║        🚀 VPN Bot Lite - Для слабых серверов          ║"
+    echo "║        🚀 BOT Bot Lite - Для слабых серверов          ║"
     echo "║                                                       ║"
     echo "║  Версия: $VERSION                                     ║"
     echo "║  RAM: 512MB - 1GB                                     ║"
@@ -259,7 +259,7 @@ create_env() {
     
     cat > $INSTALL_DIR/.env << EOF
 # =============================================================================
-# VPN Bot Configuration - LITE VERSION
+# BOT Bot Configuration - LITE VERSION
 # =============================================================================
 
 # Токен бота
@@ -271,11 +271,11 @@ MY_ID_TELEG=
 # Ник для поддержки
 NICK_HELP='codenlx'
 
-# Имя автора VPN
-NAME_AUTHOR_VPN='Александр'
+# Имя автора BOT
+NAME_AUTHOR_BOT='Александр'
 
 # Название бота
-NAME_VPN_CONFIG='VPCoden'
+NAME_BOT_CONFIG='VPCoden'
 
 # Порт 3X-UI
 X3_UI_PORT_PANEL=$XUI_PORT
@@ -319,7 +319,7 @@ create_service() {
     
     cat > /etc/systemd/system/$BOT_SERVICE_NAME.service << EOF
 [Unit]
-Description=VPN Bot Service (Lite)
+Description=BOT Bot Service (Lite)
 After=network.target
 
 [Service]

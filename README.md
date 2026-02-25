@@ -5,7 +5,7 @@
 [![Python](https://img.shields.io/badge/python-3.11-yellow.svg)](https://www.python.org/)
 [![Telegram](https://img.shields.io/badge/Telegram-Bot-blue.svg)](https://t.me/your_bot)
 
-> **Автоматическая установка VPN бота для Telegram с 3X-UI панелью**
+> **Автоматическая установка BOT бота для Telegram с 3X-UI панелью**
 
 ---
 
@@ -180,8 +180,8 @@ MY_ID_TELEG=            # ID администратора
 # =============================================================================
 
 NICK_HELP='codenlx'     # Ник поддержки
-NAME_AUTHOR_VPN='Александр'  # Имя автора
-NAME_VPN_CONFIG='VPCoden'    # Название бота
+NAME_AUTHOR_BOT='Александр'  # Имя автора
+NAME_BOT_CONFIG='VPCoden'    # Название бота
 
 # =============================================================================
 # Протоколы (True/False)
@@ -200,7 +200,7 @@ TEST_KEY=True           # Тестовые ключи
 REF_SYSTEM=True         # Реферальная система
 OPLATA=True             # Оплата
 DONATE_SYSTEM=True      # Донаты
-WHY_VPN_PAY=True        # Информация об оплате
+WHY_BOT_PAY=True        # Информация об оплате
 OBESH_PLATEZH=True      # Обещанный платеж
 SEND_QR=False           # QR-коды (отключено для VLESS)
 

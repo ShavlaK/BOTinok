@@ -9,7 +9,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 #       если необходимо добавить кнопки в разные строки, то нужно использовать несколько функций .add(), пример: klav.add(but_test_key).add(but_connect)
 #############################
 
-async def fun_klav_start(user, NAME_VPN_CONFIG):
+async def fun_klav_start(user, NAME_BOT_CONFIG):
     klav = InlineKeyboardMarkup()
     if not user.isGetTestKey:
         klav.add(InlineKeyboardButton(text=user.lang.get('but_test_key'), callback_data=f'buttons:but_test_key'))
@@ -18,7 +18,7 @@ async def fun_klav_start(user, NAME_VPN_CONFIG):
     klav.add(InlineKeyboardButton(text=user.lang.get('but_change_protocol'), callback_data=f'buttons:but_change_protocol'))
     klav.add(InlineKeyboardButton(text=user.lang.get('but_change_location'), callback_data=f'buttons:but_change_location'))
     klav.add(InlineKeyboardButton(text=user.lang.get('but_ref'), callback_data=f'buttons:but_ref'))
-    klav.add(InlineKeyboardButton(text=user.lang.get('but_desription').format(name_config=NAME_VPN_CONFIG), callback_data=f'buttons:but_desription'))
+    klav.add(InlineKeyboardButton(text=user.lang.get('but_desription').format(name_config=NAME_BOT_CONFIG), callback_data=f'buttons:but_desription'))
     klav.add(InlineKeyboardButton(text=user.lang.get('but_donate'), callback_data=f'buttons:but_donate'))
     klav.add(InlineKeyboardButton(text=user.lang.get('but_change_language'), callback_data=f'buttons:but_change_language'))
     klav.add(InlineKeyboardButton(text=user.lang.get('but_help'), callback_data=f'buttons:but_help'))
@@ -98,7 +98,7 @@ async def fun_klav_podkl_no_back(user, buttons_podkl):
 async def fun_klav_help(user):
     klav = InlineKeyboardMarkup()
     klav.add(InlineKeyboardButton(text=user.lang.get('but_how_podkl'), callback_data=f'buttons:but_how_podkl'))
-    klav.add(InlineKeyboardButton(text=user.lang.get('but_no_work_vpn'), callback_data=f'buttons:but_no_work_vpn'))
+    klav.add(InlineKeyboardButton(text=user.lang.get('but_no_work_bot'), callback_data=f'buttons:but_no_work_bot'))
     klav.add(InlineKeyboardButton(text=user.lang.get('but_manager'), callback_data=f'buttons:but_manager'))
     klav.add(InlineKeyboardButton(text=user.lang.get('but_polz_sogl'), callback_data=f'buttons:but_polz_sogl'))
     klav.add(InlineKeyboardButton(text=user.lang.get('but_pravila'), callback_data=f'buttons:but_pravila'))

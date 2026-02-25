@@ -2,7 +2,7 @@
 
 ## 🔍 Описание
 
-Команда `/add_server_for_whitelist` автоматически настраивает **whitelist-туннель VLESS over VLESS** для обхода блокировок VPN.
+Команда `/add_server_for_whitelist` автоматически настраивает **whitelist-туннель VLESS over VLESS** для обхода блокировок BOT.
 
 ### Принцип работы
 

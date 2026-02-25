@@ -14,7 +14,7 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
-    container_name: vpn-bot
+    container_name: bot-bot
     restart: unless-stopped
     
     # Переменные окружения
@@ -62,7 +62,7 @@ services:
     
     # Сеть
     networks:
-      - vpn-network
+      - bot-network
 
   # =============================================================================
   # Watchtower (автообновление контейнеров)
@@ -80,7 +80,7 @@ services:
     
     # Сеть
     networks:
-      - vpn-network
+      - bot-network
     
     # Профили (запускается отдельно)
     profiles:
@@ -92,11 +92,11 @@ services:
 volumes:
   bot_data:
     driver: local
-    name: vpn-bot-data
+    name: bot-bot-data
   
   bot_logs:
     driver: local
-    name: vpn-bot-logs
+    name: bot-bot-logs
   
   xui_data:
     driver: local
@@ -106,6 +106,6 @@ volumes:
 # Сети
 # =============================================================================
 networks:
-  vpn-network:
+  bot-network:
     driver: bridge
-    name: vpn-network
+    name: bot-network

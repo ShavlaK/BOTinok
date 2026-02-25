@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # =============================================================================
-# VPN Bot - Автоматическая установка
+# BOT Bot - Автоматическая установка
 # =============================================================================
 # Версия: 1.0
-# Описание: Скрипт для автоматической установки VPN бота с 3X-UI панелью
+# Описание: Скрипт для автоматической установки BOT бота с 3X-UI панелью
 # Требования: Debian 11+, 2GB RAM (или 1GB + swap), 10GB disk
 # =============================================================================
 
@@ -50,7 +50,7 @@ show_banner() {
     echo -e "${CYAN}"
     echo "╔═══════════════════════════════════════════════════════╗"
     echo "║                                                       ║"
-    echo "║           🚀 VPN Bot - Автоматическая установка       ║"
+    echo "║           🚀 BOT Bot - Автоматическая установка       ║"
     echo "║                                                       ║"
     echo "║  Версия: $VERSION                                     ║"
     echo "║  GitHub: https://github.com/ShavlaK/BOTinok     ║"
@@ -295,7 +295,7 @@ create_env() {
     
     cat > $INSTALL_DIR/.env << EOF
 # =============================================================================
-# VPN Bot Configuration
+# BOT Bot Configuration
 # =============================================================================
 
 # Токен бота (получить в @BotFather)
@@ -307,11 +307,11 @@ MY_ID_TELEG=
 # Ник для поддержки
 NICK_HELP='codenlx'
 
-# Имя автора VPN
-NAME_AUTHOR_VPN='Александр'
+# Имя автора BOT
+NAME_AUTHOR_BOT='Александр'
 
 # Название бота для конфигов
-NAME_VPN_CONFIG='VPCoden'
+NAME_BOT_CONFIG='VPCoden'
 
 # Порт 3X-UI панели
 X3_UI_PORT_PANEL=$XUI_PORT
@@ -331,7 +331,7 @@ TEST_KEY=True
 REF_SYSTEM=True
 OPLATA=True
 DONATE_SYSTEM=True
-WHY_VPN_PAY=True
+WHY_BOT_PAY=True
 OBESH_PLATEZH=True
 SEND_QR=False
 
@@ -360,7 +360,7 @@ create_service() {
     
     cat > /etc/systemd/system/$BOT_SERVICE_NAME.service << EOF
 [Unit]
-Description=VPN Bot Service
+Description=BOT Bot Service
 After=network.target
 
 [Service]

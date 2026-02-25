@@ -12,8 +12,8 @@
 
 1. Зайдите на https://github.com
 2. Нажмите **"New"** (создать репозиторий)
-3. Название: `vpn-bot`
-4. Описание: `VPN Bot for Telegram - Автоматическая установка`
+3. Название: `bot-bot`
+4. Описание: `BOT Bot for Telegram - Автоматическая установка`
 5. Видимость: **Public** (или Private для личного использования)
 6. **Не** создавайте с README (у нас уже есть свой)
 7. Нажмите **"Create repository"**
@@ -26,7 +26,7 @@
 
 ```bash
 # Перейдите в директорию проекта
-cd /Users/shavlak/Desktop/vpn_bot/vpn-bot-project
+cd /Users/shavlak/Desktop/bot_bot/bot-bot-project
 
 # Инициализируйте Git
 git init
@@ -35,7 +35,7 @@ git init
 git add .
 
 # Сделайте первый коммит
-git commit -m "Initial commit: VPN Bot v1.0"
+git commit -m "Initial commit: BOT Bot v1.0"
 
 # Добавьте удалённый репозиторий (замените ShavlaK)
 git remote add origin https://github.com/ShavlaK/BOTinok.git
@@ -47,7 +47,7 @@ git push -u origin main
 ### Вариант B: Через веб-интерфейс
 
 1. В созданном репозитории нажмите **"uploading an existing file"**
-2. Перетащите все файлы из папки `vpn-bot-project`
+2. Перетащите все файлы из папки `bot-bot-project`
 3. Нажмите **"Commit changes"**
 
 ---
@@ -76,7 +76,7 @@ git push -u origin main
 
 ```bash
 # В директории проекта
-cd /Users/shavlak/Desktop/vpn_bot/vpn-bot-project
+cd /Users/shavlak/Desktop/bot_bot/bot-bot-project
 
 # Замените ShavlaK на ваш ник (пример: coden)
 sed -i '' 's/ShavlaK/coden/g' README.md install.sh install-lite.sh docker/Dockerfile
@@ -206,14 +206,14 @@ git push origin v1.0.0
 Добавьте бейджи в начало README.md:
 
 ```markdown
-# 🚀 VPN Bot
+# 🚀 BOT Bot
 
 [![Version](https://img.shields.io/github/v/release/ShavlaK/BOTinok)](https://github.com/ShavlaK/BOTinok/releases)
 [![License](https://img.shields.io/github/license/ShavlaK/BOTinok)](LICENSE)
 [![Stars](https://img.shields.io/github/stars/ShavlaK/BOTinok)](https://github.com/ShavlaK/BOTinok/stargazers)
 [![Forks](https://img.shields.io/github/forks/ShavlaK/BOTinok)](https://github.com/ShavlaK/BOTinok/network/members)
 
-> Автоматическая установка VPN бота для Telegram
+> Автоматическая установка BOT бота для Telegram
 ```
 
 ### 8.2 Добавьте скриншоты
@@ -253,7 +253,7 @@ xui_credentials.txt
 ### 10.1 Добавьте тему
 
 В настройках репозитория добавьте темы:
-- `vpn`
+- `bot`
 - `telegram-bot`
 - `vless`
 - `proxy`
@@ -263,7 +263,7 @@ xui_credentials.txt
 
 Краткое описание для репозитория:
 ```
-🚀 Автоматическая установка VPN бота для Telegram с 3X-UI панелью. 
+🚀 Автоматическая установка BOT бота для Telegram с 3X-UI панелью. 
 Поддержка VLESS, whitelist-туннели, платёжные системы.
 ```
 

@@ -138,7 +138,7 @@ try:
     from aiogram.dispatcher.handler import CancelHandler, current_handler
     from aiogram.utils.exceptions import Throttled
     from aiosqlite import connect
-    from outline_vpn.outline_vpn import OutlineVPN
+    from outline_bot.outline_bot import OutlineBOT
     from tinkoff_acquiring_api import TinkoffAcquiring
     if not TEST:
         from CryptomusAPI import Cryptomus
@@ -236,9 +236,9 @@ def check_varibles():
     try: NO_ROOT_USER
     except: NO_ROOT_USER = 'Coden'
 
-    global NAME_AUTHOR_VPN
-    try: NAME_AUTHOR_VPN
-    except: NAME_AUTHOR_VPN = NAME_VPN_CONFIG
+    global NAME_AUTHOR_BOT
+    try: NAME_AUTHOR_BOT
+    except: NAME_AUTHOR_BOT = NAME_BOT_CONFIG
 
     global X3_UI_PORT_PANEL
     try: X3_UI_PORT_PANEL
@@ -642,7 +642,7 @@ class UserBot:
             self.news_photo_path = ''
             self.news_is_photo = False
             self.bill_id = ''
-            self.bill_vpn_key = ''
+            self.bill_bot_key = ''
             self.isAutoCheckOn = False
             self.isAdmin = self.id_Telegram in ADMINS_IDS
             self.clients_report = []
@@ -834,7 +834,7 @@ class UserBot:
                 self.buttons_days.append(f'{but_12_month} - {self.tarif_12_text}{self.valuta}')
             
             self.isGetTestKey = await DB.isGetTestKey_by_user(self.id_Telegram)
-            self.klav_start = await fun_klav_start(self, NAME_VPN_CONFIG)
+            self.klav_start = await fun_klav_start(self, NAME_BOT_CONFIG)
             self.klav_buy_days = await fun_klav_buy_days(self)
         except:
             await Print_Error()
@@ -865,12 +865,12 @@ class UserBot:
             if not DONATE_SYSTEM:
                 self.lang['but_donate'] = ''
                 self.lang['but_donaters'] = ''
-            if not WHY_VPN_PAY:
+            if not WHY_BOT_PAY:
                 self.lang['but_why'] = ''
             if not URL_INSTAGRAM:
                 self.lang['but_instagram'] = ''
 
-            self.lang['but_desription'] = self.lang['but_desription'].format(name_config=NAME_VPN_CONFIG)
+            self.lang['but_desription'] = self.lang['but_desription'].format(name_config=NAME_BOT_CONFIG)
 
             if COUNT_PROTOCOLS < 2:
                 self.lang['but_change_protocol'] = ''
@@ -936,7 +936,7 @@ class DB:
             await cursor.execute("CREATE TABLE IF NOT EXISTS Urls (id integer PRIMARY KEY AUTOINCREMENT NOT NULL,code text NOT NULL,Discount_percentage integer NOT NULL,id_partner integer NOT NULL DEFAULT(0),percent_partner integer NOT NULL DEFAULT(0),date date)")
             await cursor.execute("CREATE TABLE IF NOT EXISTS ReportsData (id integer PRIMARY KEY AUTOINCREMENT NOT NULL,CountNewUsers integer NOT NULL DEFAULT(0),CountBuy integer NOT NULL DEFAULT(0),CountTestKey integer NOT NULL DEFAULT(0),SummDay integer NOT NULL DEFAULT(0),Date date)")
             await cursor.execute("CREATE TABLE IF NOT EXISTS Refs (id_Refer bigint NOT NULL,id_Client bigint NOT NULL,FOREIGN KEY (id_Refer) REFERENCES Users (User_id),FOREIGN KEY (id_Client) REFERENCES Users (User_id),PRIMARY KEY(id_Refer, id_Client))")
-            await cursor.execute("CREATE TABLE IF NOT EXISTS QR_Keys (User_id bitint NOT NULL,VPN_Key integer NOT NULL,Date text NOT NULL,OS text NOT NULL,isAdminKey integer NOT NULL DEFAULT(0),ip_server text,CountDaysBuy integer NOT NULL DEFAULT(30),isActive bool DEFAULT(1),isChangeProtocol bool NOT NULL DEFAULT(0),DateChangeProtocol date,Payment_id text NOT NULL DEFAULT(''),isPremium bool NOT NULL DEFAULT(0),FOREIGN KEY (User_id) REFERENCES Users (User_id))")
+            await cursor.execute("CREATE TABLE IF NOT EXISTS QR_Keys (User_id bitint NOT NULL,BOT_Key integer NOT NULL,Date text NOT NULL,OS text NOT NULL,isAdminKey integer NOT NULL DEFAULT(0),ip_server text,CountDaysBuy integer NOT NULL DEFAULT(30),isActive bool DEFAULT(1),isChangeProtocol bool NOT NULL DEFAULT(0),DateChangeProtocol date,Payment_id text NOT NULL DEFAULT(''),isPremium bool NOT NULL DEFAULT(0),FOREIGN KEY (User_id) REFERENCES Users (User_id))")
             await cursor.execute("CREATE TABLE IF NOT EXISTS PromoCodes (Code text NOT NULL,CountDays integer NOT NULL DEFAULT(30),isActivated bool NOT NULL DEFAULT(0),User text NOT NULL DEFAULT(''),id_partner integer NOT NULL DEFAULT(0))")
             await cursor.execute("CREATE TABLE IF NOT EXISTS Donats (User_id bigint NOT NULL,Sum integer NOT NULL,FOREIGN KEY (User_id) REFERENCES Users (User_id))")
             await self.conn.commit()
@@ -1197,7 +1197,7 @@ class DB:
                 where = ''
                 arg = ()
 
-            result = await cursor.execute(f"SELECT qr.VPN_Key, qr.OS, qr.isAdminKey, qr.Date, qr.CountDaysBuy, qr.ip_server, qr.isActive, qr.Protocol, sr.Location, qr.Keys_Data, qr.User_id, qr.Podpiska, qr.Payment_id FROM QR_Keys qr JOIN Servers sr ON ip=ip_server{where} ORDER BY Date DESC", arg)
+            result = await cursor.execute(f"SELECT qr.BOT_Key, qr.OS, qr.isAdminKey, qr.Date, qr.CountDaysBuy, qr.ip_server, qr.isActive, qr.Protocol, sr.Location, qr.Keys_Data, qr.User_id, qr.Podpiska, qr.Payment_id FROM QR_Keys qr JOIN Servers sr ON ip=ip_server{where} ORDER BY Date DESC", arg)
             return await result.fetchall()
         except:
             await Print_Error()
@@ -1322,7 +1322,7 @@ class DB:
     @while_sql
     async def get_count_keys_by_ip(self, ip=None):
         cursor = await self.conn.cursor()
-        query = "SELECT VPN_Key FROM QR_Keys"
+        query = "SELECT BOT_Key FROM QR_Keys"
         result = await cursor.execute(query + " WHERE ip_server = ?", (ip,))
         result = await result.fetchall()
         if not result is None:
@@ -1418,15 +1418,15 @@ class DB:
 
     #region Ключи
     @while_sql
-    async def set_date_off_key(self, vpn_key, date_off):
+    async def set_date_off_key(self, bot_key, date_off):
         cursor = await self.conn.cursor()
-        await cursor.execute("UPDATE QR_Keys SET date_off_client = ? WHERE VPN_Key = ?", (date_off, vpn_key,))
+        await cursor.execute("UPDATE QR_Keys SET date_off_client = ? WHERE BOT_Key = ?", (date_off, bot_key,))
         return await self.conn.commit()
 
     @while_sql
-    async def get_date_off_key(self, vpn_key):
+    async def get_date_off_key(self, bot_key):
         cursor = await self.conn.cursor()
-        result = await cursor.execute("SELECT date_off_client FROM QR_Keys WHERE VPN_Key = ?", (vpn_key,))
+        result = await cursor.execute("SELECT date_off_client FROM QR_Keys WHERE BOT_Key = ?", (bot_key,))
         result = await result.fetchone()
         if result and len(result) > 0:
             return result[0]
@@ -1434,24 +1434,24 @@ class DB:
     @while_sql
     async def set_payment_id_by_key(self, key=None, payment_id=None):
         cursor = await self.conn.cursor()
-        await cursor.execute("UPDATE QR_Keys SET Payment_id = ? WHERE VPN_Key = ?", (payment_id, key,))
+        await cursor.execute("UPDATE QR_Keys SET Payment_id = ? WHERE BOT_Key = ?", (payment_id, key,))
         return await self.conn.commit()
 
     @while_sql
     async def exists_key(self, key):
         cursor = await self.conn.cursor()
-        result = await cursor.execute("SELECT VPN_Key FROM QR_Keys WHERE VPN_Key = ?", (key,))
+        result = await cursor.execute("SELECT BOT_Key FROM QR_Keys WHERE BOT_Key = ?", (key,))
         result = await result.fetchall()
         return bool(len(result))
 
     @while_sql
     async def add_day_qr_key_ref(self, user_id=None, days=None):
-        res = await self.get_qr_key_All(user_id) #VPN_Key, Date, User_id, isAdminKey, CountDaysBuy, ip_server, isActive
+        res = await self.get_qr_key_All(user_id) #BOT_Key, Date, User_id, isAdminKey, CountDaysBuy, ip_server, isActive
         if not res is None and bool(len(res)):
             # Если ключ есть у пользователя
             # Добавляем N дней и возвращаем True
             res = res[-1]
-            vpn_key = res[0] # coden_333_3213
+            bot_key = res[0] # coden_333_3213
             ip_server = res[5]
             isActive = bool(res[6])
             protocol = res[7]
@@ -1460,62 +1460,62 @@ class DB:
 
             cursor = await self.conn.cursor()
             if isActive:
-                await cursor.execute("UPDATE QR_Keys SET CountDaysBuy = CountDaysBuy + ?, isActive = ? WHERE VPN_Key = ?", (days, True, vpn_key,))
+                await cursor.execute("UPDATE QR_Keys SET CountDaysBuy = CountDaysBuy + ?, isActive = ? WHERE BOT_Key = ?", (days, True, bot_key,))
             else:
-                await cursor.execute("UPDATE QR_Keys SET Date = ?, CountDaysBuy = CountDaysBuy + ?, isActive = ? WHERE VPN_Key = ?", (date, days, True, vpn_key,))
+                await cursor.execute("UPDATE QR_Keys SET Date = ?, CountDaysBuy = CountDaysBuy + ?, isActive = ? WHERE BOT_Key = ?", (date, days, True, bot_key,))
             await self.conn.commit()
 
-            await change_days_vless(vpn_key, countDays + days)
+            await change_days_vless(bot_key, countDays + days)
 
-            return (True, vpn_key, ip_server, protocol)
+            return (True, bot_key, ip_server, protocol)
         else:
             # Если ключа у пользователя нет, то возвращаем False
             return (False, '', '', PR_DEFAULT)
 
     @while_sql
-    async def add_day_qr_key_in_DB(self, user_id=None, days=None, vpn_key=None, summ=0, bill_id='', is_on_key=False):
+    async def add_day_qr_key_in_DB(self, user_id=None, days=None, bot_key=None, summ=0, bill_id='', is_on_key=False):
         res = await self.get_qr_key_All(user_id)
 
         if res and len(res) > 0:
             for key in res:
                 name_qr = key[0]
-                if name_qr == vpn_key:
+                if name_qr == bot_key:
                     date = datetime.now().strftime("%Y_%m_%d")
                     cursor = await self.conn.cursor()
                     isActive = bool(key[6])
                     countDaysBuy = key[4]
 
                     if isActive or is_on_key:
-                        await cursor.execute("UPDATE QR_Keys SET CountDaysBuy = CountDaysBuy + ?, isActive = ? WHERE VPN_Key = ?", (days, True, vpn_key,))
+                        await cursor.execute("UPDATE QR_Keys SET CountDaysBuy = CountDaysBuy + ?, isActive = ? WHERE BOT_Key = ?", (days, True, bot_key,))
                     else:
-                        await cursor.execute("UPDATE QR_Keys SET Date = ?, CountDaysBuy = ?, isActive = ? WHERE VPN_Key = ?", (date, days, True, vpn_key,))
+                        await cursor.execute("UPDATE QR_Keys SET Date = ?, CountDaysBuy = ?, isActive = ? WHERE BOT_Key = ?", (date, days, True, bot_key,))
                     await self.conn.commit()
 
                     if not (summ == 0 and bill_id == ''):
                         user = await user_get(user_id)
                         await self.add_operation('prodl', user_id, summ, days, '', bill_id, user.paymentDescription)
 
-                    await change_days_vless(vpn_key, countDaysBuy + days)
+                    await change_days_vless(bot_key, countDaysBuy + days)
                     return True
 
     @while_sql
-    async def set_day_qr_key_in_DB(self, vpn_key=None, count=0):
+    async def set_day_qr_key_in_DB(self, bot_key=None, count=0):
         cursor = await self.conn.cursor()
-        await cursor.execute("UPDATE QR_Keys SET CountDaysBuy = ?, isActive = ? WHERE VPN_Key = ?", (count, True, vpn_key,))
+        await cursor.execute("UPDATE QR_Keys SET CountDaysBuy = ?, isActive = ? WHERE BOT_Key = ?", (count, True, bot_key,))
         await self.conn.commit()
         return True
 
     @while_sql
-    async def set_summ_qr_key_in_DB(self, vpn_key=None, summ=0):
+    async def set_summ_qr_key_in_DB(self, bot_key=None, summ=0):
         cursor = await self.conn.cursor()
-        await cursor.execute("UPDATE QR_Keys SET summ = ? WHERE VPN_Key = ?", (summ, vpn_key,))
+        await cursor.execute("UPDATE QR_Keys SET summ = ? WHERE BOT_Key = ?", (summ, bot_key,))
         await self.conn.commit()
         return True
 
     @while_sql
-    async def On_Off_qr_key(self, isOn=False, name_vpn_key=None):
+    async def On_Off_qr_key(self, isOn=False, name_bot_key=None):
         cursor = await self.conn.cursor()
-        await cursor.execute("UPDATE QR_Keys SET isActive = ? WHERE VPN_Key = ?", (isOn, name_vpn_key,))
+        await cursor.execute("UPDATE QR_Keys SET isActive = ? WHERE BOT_Key = ?", (isOn, name_bot_key,))
         return await self.conn.commit()
 
     @while_sql
@@ -1527,7 +1527,7 @@ class DB:
     @while_sql
     async def get_qr_key_All(self, user_id=None):
         cursor = await self.conn.cursor()
-        query = "SELECT VPN_Key, Date, User_id, isAdminKey, CountDaysBuy, ip_server, isActive, Protocol, isChangeProtocol, DateChangeProtocol, Payment_id, RebillId, Podpiska, date_time, summ FROM QR_Keys"
+        query = "SELECT BOT_Key, Date, User_id, isAdminKey, CountDaysBuy, ip_server, isActive, Protocol, isChangeProtocol, DateChangeProtocol, Payment_id, RebillId, Podpiska, date_time, summ FROM QR_Keys"
         if user_id is None:
             result = await cursor.execute(query)
         else:
@@ -1537,26 +1537,26 @@ class DB:
     @while_sql
     async def get_qr_key_for_check_keys(self):
         cursor = await self.conn.cursor()
-        result = await cursor.execute("SELECT VPN_Key, Protocol, ip_server, User_id, Date, CountDaysBuy, isActive FROM QR_Keys")
+        result = await cursor.execute("SELECT BOT_Key, Protocol, ip_server, User_id, Date, CountDaysBuy, isActive FROM QR_Keys")
         return await result.fetchall()
 
     @while_sql
     async def get_key_by_name(self, key_name=None):
         cursor = await self.conn.cursor()
-        query = "SELECT VPN_Key, Date, User_id, isAdminKey, CountDaysBuy, ip_server, isActive, Protocol, isChangeProtocol, DateChangeProtocol, Payment_id, RebillId, Podpiska FROM QR_Keys"
-        result = await cursor.execute(query + " WHERE VPN_Key = ?", (key_name,))
+        query = "SELECT BOT_Key, Date, User_id, isAdminKey, CountDaysBuy, ip_server, isActive, Protocol, isChangeProtocol, DateChangeProtocol, Payment_id, RebillId, Podpiska FROM QR_Keys"
+        result = await cursor.execute(query + " WHERE BOT_Key = ?", (key_name,))
         return await result.fetchone()
 
     @while_sql
     async def get_keys_name_by_ip_server(self, ip_server=None):
         cursor = await self.conn.cursor()
-        result = await cursor.execute("SELECT VPN_Key, Protocol FROM QR_Keys WHERE ip_server = ?", (ip_server,))
+        result = await cursor.execute("SELECT BOT_Key, Protocol FROM QR_Keys WHERE ip_server = ?", (ip_server,))
         return await result.fetchall()
 
     @while_sql
     async def get_ip_server_by_key_name(self, key_name=None):
         cursor = await self.conn.cursor()
-        result = await cursor.execute("SELECT ip_server FROM QR_Keys WHERE VPN_Key = ?", (key_name,))
+        result = await cursor.execute("SELECT ip_server FROM QR_Keys WHERE BOT_Key = ?", (key_name,))
         result = await result.fetchone()
         if not result is None and len(result) > 0:
             return result[0]
@@ -1566,7 +1566,7 @@ class DB:
     @while_sql
     async def get_Protocol_by_key_name(self, key_name=None):
         cursor = await self.conn.cursor()
-        result = await cursor.execute("SELECT Protocol FROM QR_Keys WHERE VPN_Key = ?", (key_name,))
+        result = await cursor.execute("SELECT Protocol FROM QR_Keys WHERE BOT_Key = ?", (key_name,))
         result = await result.fetchone()
         try:
             return result[0]
@@ -1574,16 +1574,16 @@ class DB:
             return PR_DEFAULT
 
     @while_sql
-    async def add_qr_key(self, user_id=None, vpn_key=None, date=None, os=None, isAdminKey=0, ip=None, days=None, summ=0, bill_id='', protocol=PR_DEFAULT, isChangeProtocol=False, keys_data='', podpiska=-1):
+    async def add_qr_key(self, user_id=None, bot_key=None, date=None, os=None, isAdminKey=0, ip=None, days=None, summ=0, bill_id='', protocol=PR_DEFAULT, isChangeProtocol=False, keys_data='', podpiska=-1):
         cursor = await self.conn.cursor()
         date_time = datetime.now()
         try:
             await cursor.execute(
-                "INSERT INTO QR_Keys (User_id, VPN_Key, Date, OS, isAdminKey, ip_server, CountDaysBuy, Protocol, isChangeProtocol, Keys_Data, Podpiska, date_time, summ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                (user_id,vpn_key,date,os,isAdminKey,ip,days,protocol,isChangeProtocol,keys_data,podpiska, date_time,summ)
+                "INSERT INTO QR_Keys (User_id, BOT_Key, Date, OS, isAdminKey, ip_server, CountDaysBuy, Protocol, isChangeProtocol, Keys_Data, Podpiska, date_time, summ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (user_id,bot_key,date,os,isAdminKey,ip,days,protocol,isChangeProtocol,keys_data,podpiska, date_time,summ)
             )
         except Exception as e:
-            await send_admins(None, f'🛑Ошибка в add_qr_key({(user_id, vpn_key, date, os, isAdminKey, ip, days, summ, bill_id, protocol, isChangeProtocol, podpiska)})', f'⚠️Ошибка:\n{e}')
+            await send_admins(None, f'🛑Ошибка в add_qr_key({(user_id, bot_key, date, os, isAdminKey, ip, days, summ, bill_id, protocol, isChangeProtocol, podpiska)})', f'⚠️Ошибка:\n{e}')
         await self.conn.commit()
 
         if not (summ == 0 and bill_id == ''):
@@ -1592,9 +1592,9 @@ class DB:
         return
 
     @while_sql
-    async def get_summ_next_pay(self, vpn_key=None):
+    async def get_summ_next_pay(self, bot_key=None):
         cursor = await self.conn.cursor()
-        result = await cursor.execute("SELECT summ FROM QR_Keys WHERE VPN_Key = ?", (vpn_key,))
+        result = await cursor.execute("SELECT summ FROM QR_Keys WHERE BOT_Key = ?", (bot_key,))
         result = await result.fetchone()
         if result and len(result) > 0:
             return result[0]
@@ -1602,16 +1602,16 @@ class DB:
             return 0
 
     @while_sql
-    async def delete_qr_key(self, VPN_Key=None):
+    async def delete_qr_key(self, BOT_Key=None):
         cursor = await self.conn.cursor()
-        await cursor.execute("DELETE FROM QR_Keys WHERE VPN_Key = ?", (VPN_Key,))
+        await cursor.execute("DELETE FROM QR_Keys WHERE BOT_Key = ?", (BOT_Key,))
         await self.conn.commit()
         return True
 
     @while_sql
-    async def set_keys_data_for_key(self, vpn_key=None, keys_data=''):
+    async def set_keys_data_for_key(self, bot_key=None, keys_data=''):
         cursor = await self.conn.cursor()
-        await cursor.execute("UPDATE QR_Keys SET Keys_Data = ? WHERE VPN_Key = ?", (keys_data, vpn_key,))
+        await cursor.execute("UPDATE QR_Keys SET Keys_Data = ? WHERE BOT_Key = ?", (keys_data, bot_key,))
         await self.conn.commit()
         return True
 
@@ -1722,9 +1722,9 @@ class DB:
         return True
     
     @while_sql
-    async def set_payment_id_qr_key_in_DB(self, vpn_key=None, payment_id='', RebillId=''):
+    async def set_payment_id_qr_key_in_DB(self, bot_key=None, payment_id='', RebillId=''):
         cursor = await self.conn.cursor()
-        await cursor.execute("UPDATE QR_Keys SET Payment_id = ?, RebillId = ? WHERE VPN_Key = ?", (payment_id, RebillId, vpn_key,))
+        await cursor.execute("UPDATE QR_Keys SET Payment_id = ?, RebillId = ? WHERE BOT_Key = ?", (payment_id, RebillId, bot_key,))
         await self.conn.commit()
         return True
         
@@ -2046,9 +2046,9 @@ class DB:
         return await self.conn.commit()
 
     @while_sql
-    async def update_qr_key_date_change_protocol(self, vpn_key, date):
+    async def update_qr_key_date_change_protocol(self, bot_key, date):
         cursor = await self.conn.cursor()
-        await cursor.execute("UPDATE QR_Keys SET DateChangeProtocol = ? WHERE VPN_Key = ?", (date, vpn_key,))
+        await cursor.execute("UPDATE QR_Keys SET DateChangeProtocol = ? WHERE BOT_Key = ?", (date, bot_key,))
         return await self.conn.commit()
     
     @while_sql
@@ -4097,7 +4097,7 @@ class KEYS_ACTIONS:
                         logger.warning(f'🛑Сервер {server["ip"]} не доступен')
                         continue
                     if protocol == 'wireguard':
-                        await exec_command_in_http_server(ip=server['ip'], password=server['password'], command=f'pivpn -on -y {conf_name}')
+                        await exec_command_in_http_server(ip=server['ip'], password=server['password'], command=f'pibot -on -y {conf_name}')
                     elif protocol == 'vless':
                         if check_server_is_marzban(server['ip']):
                             marzban = MARZBAN(server['ip'], server['password'])
@@ -4144,9 +4144,9 @@ class KEYS_ACTIONS:
                         continue
 
                     if protocol == 'wireguard':
-                        await exec_command_in_http_server(ip=server['ip'], password=server['password'], command=f'pivpn -off -y {conf_name}')
+                        await exec_command_in_http_server(ip=server['ip'], password=server['password'], command=f'pibot -off -y {conf_name}')
                     elif protocol == 'outline':
-                        OutlineVPN(server['api_url'], server['cert_sha256']).delete_key(int(conf_name.split('_')[-2]))
+                        OutlineBOT(server['api_url'], server['cert_sha256']).delete_key(int(conf_name.split('_')[-2]))
                     elif protocol == 'vless':
                         if check_server_is_marzban(server['ip']):
                             marzban = MARZBAN(server['ip'], server['password'])
@@ -4200,9 +4200,9 @@ class KEYS_ACTIONS:
                             raise f'Сервер {server["ip"]} не отвечает'
 
                         if protocol == 'wireguard':
-                            await exec_command_in_http_server(ip=server['ip'], password=server['password'], command=f'pivpn -r -y {conf_name}')
+                            await exec_command_in_http_server(ip=server['ip'], password=server['password'], command=f'pibot -r -y {conf_name}')
                         elif protocol == 'outline':
-                            OutlineVPN(server['api_url'], server['cert_sha256']).delete_key(int(conf_name.split('_')[-2]))
+                            OutlineBOT(server['api_url'], server['cert_sha256']).delete_key(int(conf_name.split('_')[-2]))
                         elif protocol == 'vless':
                             if check_server_is_marzban(server['ip']):
                                 marzban = MARZBAN(server['ip'], server['password'])
@@ -4379,7 +4379,7 @@ class MARZBAN:
             data_key = response
         else:
             data_key = self._get_key(key)
-        return data_key['subscription_url'] + f'?name=🤖{NAME_VPN_CONFIG}'
+        return data_key['subscription_url'] + f'?name=🤖{NAME_BOT_CONFIG}'
 
     async def install_marzban_for_server(self, user_id=None, location=''):
         try:
@@ -4674,7 +4674,7 @@ class MARZBAN:
         try:
             self._connect_api()
             
-            data_db = await DB.get_key_by_name(key) # VPN_Key, Date, User_id, isAdminKey, CountDaysBuy, ...
+            data_db = await DB.get_key_by_name(key) # BOT_Key, Date, User_id, isAdminKey, CountDaysBuy, ...
             date_key = data_db[1]
             CountDaysBuy = int(data_db[4])
             
@@ -4738,16 +4738,16 @@ class VLESS:
     vless = VLESS('1.1.1.1', 'admin')
 
     # Добавление конфигурации
-    async vless.addOrUpdateKey('TEST_VPN_77777')
+    async vless.addOrUpdateKey('TEST_BOT_77777')
 
     # Удаление конфигурации
-    vless.deleteKey('TEST_VPN_77777')
+    vless.deleteKey('TEST_BOT_77777')
 
     # Список активных конфигураций
     vless.activ_list()
 
     # Отключение конфигурации
-    async vless.addOrUpdateKey(vpn_key, isUpdate=True, isActive=True)
+    async vless.addOrUpdateKey(bot_key, isUpdate=True, isActive=True)
     """
 
     def __init__(self, ip, password):
@@ -4787,7 +4787,7 @@ class VLESS:
             logger.warning(f'🛑Подключение к панели 3x-ui {self.ip} не произошло 4, ошибка: {e}, data = {self.data}')
             return False
 
-    def _getLink(self, vpn_key, isIOS=False):
+    def _getLink(self, bot_key, isIOS=False):
         try:
             if self.con:
                 resource = self.ses.post(f'{self.host}/panel/inbound/list/', data=self.data, timeout=5).json()
@@ -4815,11 +4815,11 @@ class VLESS:
                 flow = '' # '&flow=xtls-rprx-vision'
 
                 if any(c.isalpha() for c in self.ip):
-                    subId = vpn_key
-                    res = f'https://{self.ip}:2096/sub/{subId}?name={NAME_VPN_CONFIG}-{vpn_key}'
+                    subId = bot_key
+                    res = f'https://{self.ip}:2096/sub/{subId}?name={NAME_BOT_CONFIG}-{bot_key}'
                 else:
-                    bottom_text = f'#{vpn_key}'
-                    res = f'vless://{vpn_key}@{self.ip}:{port}?type={network}&security={security}&fp={fingerprint}&pbk={public_key}&sni={sni}{flow}&sid={sid}&spx=%2F{bottom_text}'
+                    bottom_text = f'#{bot_key}'
+                    res = f'vless://{bot_key}@{self.ip}:{port}?type={network}&security={security}&fp={fingerprint}&pbk={public_key}&sni={sni}{flow}&sid={sid}&spx=%2F{bottom_text}'
                 return res
             else:
                 return False
@@ -4985,7 +4985,7 @@ class VLESS:
                         "up":0,
                         "down":0,
                         "total":0,
-                        "remark":NAME_VPN_CONFIG,
+                        "remark":NAME_BOT_CONFIG,
                         "enable":True,
                         "expiryTime":0,
                         "listen":"",
@@ -5086,14 +5086,14 @@ class VLESS:
             logger.warning(f'🛑VLESS._checkConnect ошибка: {e}')
             return False
 
-    async def addOrUpdateKey(self, vpn_key, isUpdate=False, isActiv=True, isIOS=False, days=1, date=None):
+    async def addOrUpdateKey(self, bot_key, isUpdate=False, isActiv=True, isIOS=False, days=1, date=None):
         try:
             if self.con:
-                logger.debug(f'Добавляем новый ключ {vpn_key} на сервере {self.ip}...' if not isUpdate else f'Обновляем ключ {vpn_key} на сервере {self.ip}...')
+                logger.debug(f'Добавляем новый ключ {bot_key} на сервере {self.ip}...' if not isUpdate else f'Обновляем ключ {bot_key} на сервере {self.ip}...')
                 header = {"Accept": "application/json"}
                 isActiv = 'true' if isActiv else 'false'
 
-                subId = vpn_key
+                subId = bot_key
 
                 try:
                     if date:
@@ -5107,9 +5107,9 @@ class VLESS:
                             days = days_raz
                     else:
                         # # узнать кол-во оставщихся дней из БД
-                        # data_db = await DB.get_key_by_name(vpn_key) # VPN_Key, Date, User_id, isAdminKey, CountDaysBuy, ...
+                        # data_db = await DB.get_key_by_name(bot_key) # BOT_Key, Date, User_id, isAdminKey, CountDaysBuy, ...
                         # if data_db and len(data_db) > 0 and data_db[0]:
-                        #     vpn_key = data_db[0]
+                        #     bot_key = data_db[0]
                         #     date_key = data_db[1]
                         #     # user_id = data_db[2]
                         #     CountDaysBuy = int(data_db[4])
@@ -5130,10 +5130,10 @@ class VLESS:
                     'id': 1,
                     'settings':
                         '{"clients":'
-                            '[{"id":' + f'"{vpn_key}",'
+                            '[{"id":' + f'"{bot_key}",'
                             # '"flow":"xtls-rprx-vision",'
                             '"alterId":90,'
-                            f'"email":"{vpn_key}",'
+                            f'"email":"{bot_key}",'
                             f'"limitIp":{VLESS_LIMIT_IP},'
                             '"totalGB":0,'
                             f'"expiryTime":0,'
@@ -5145,14 +5145,14 @@ class VLESS:
                 }
 
                 if isUpdate:
-                    command = f'/panel/inbound/updateClient/{vpn_key}'
+                    command = f'/panel/inbound/updateClient/{bot_key}'
                 else:
                     command = '/panel/inbound/addClient'
 
                 resource = self.ses.post(f'{self.host}{command}', headers=header, json=data, timeout=10).json()
                 if resource['success']:
-                    logger.debug(f'Добавили новый ключ {vpn_key} на сервере {self.ip}' if not isUpdate else f'Обновили ключ {vpn_key} на сервере {self.ip}')
-                    return (True, self._getLink(vpn_key, isIOS))
+                    logger.debug(f'Добавили новый ключ {bot_key} на сервере {self.ip}' if not isUpdate else f'Обновили ключ {bot_key} на сервере {self.ip}')
+                    return (True, self._getLink(bot_key, isIOS))
                 else:
                     logger.warning(f'🛑Ошибка при добавлении нового ключа на сервер {self.ip}:' if not isUpdate else f'🛑Ошибка при обновлении ключа на сервер {self.ip}:', resource['msg'])
                     return (False, resource['msg'])
@@ -5162,16 +5162,16 @@ class VLESS:
             logger.warning(f'🛑VLESS.addOrUpdateKey ошибка: {e}')
             return (False, str(e))
 
-    def deleteKey(self, vpn_key):
+    def deleteKey(self, bot_key):
         try:
             if self.con:
-                logger.debug(f'Удаляем ключ {vpn_key} на сервере {self.ip}...')
-                response = self.ses.post(f"{self.host}/panel/inbound/1/delClient/{vpn_key}", data=self.data, timeout=5).json()
+                logger.debug(f'Удаляем ключ {bot_key} на сервере {self.ip}...')
+                response = self.ses.post(f"{self.host}/panel/inbound/1/delClient/{bot_key}", data=self.data, timeout=5).json()
                 if response['success']:
-                    logger.debug(f'Удалили ключ {vpn_key}')
+                    logger.debug(f'Удалили ключ {bot_key}')
                     return (True, 'Успешно удалено')
                 else:
-                    logger.warning(f'🛑Ошибка при удалении ключа {vpn_key}: {response["msg"]}')
+                    logger.warning(f'🛑Ошибка при удалении ключа {bot_key}: {response["msg"]}')
                     return (False, response['msg'])
             else:
                 return (False, 'Нет подключения к серверу')
@@ -5184,7 +5184,7 @@ class VLESS:
             """
             Возвращает список активных ключей сервера
 
-            return list -> (vpn_key, trafic, url)
+            return list -> (bot_key, trafic, url)
             """
             if self.con:
                 logger.debug(f'VLESS: Получаю список активных ключей сервера {self.ip}...')
@@ -5196,11 +5196,11 @@ class VLESS:
                 for i in data["clientStats"]:
                     if str(i['enable']) in ('True', 'true'):
                         trafic = i['up'] + i['down']
-                        vpn_key = i['email']
-                        if 'test1' == vpn_key:
+                        bot_key = i['email']
+                        if 'test1' == bot_key:
                             continue
-                        url = self._getLink(vpn_key)
-                        keys.append((vpn_key, trafic, url))
+                        url = self._getLink(bot_key)
+                        keys.append((bot_key, trafic, url))
                 logger.debug(f'VLESS: Список активных ключей сервера {self.ip}: {keys}')
                 return keys
             else:
@@ -5224,7 +5224,7 @@ class CHECK_KEYS:
 
                 logger.debug(f'🔄Проверяем ключи на сервере {ip}: Outline')
                 try:
-                    outline_data = OutlineVPN(server['api_url'], server['cert_sha256']).get_keys()
+                    outline_data = OutlineBOT(server['api_url'], server['cert_sha256']).get_keys()
                 except:
                     outline_data = None
                 if outline_data:
@@ -5247,19 +5247,19 @@ class CHECK_KEYS:
                     vless_data = None
                 if vless_data:
                     for index, key in enumerate(vless_data):
-                        vpn_key_v = key[0]
+                        bot_key_v = key[0]
                         traffic = key[1]
 
-                        if vpn_key_v in keys_in_db or vpn_key_v == '':
+                        if bot_key_v in keys_in_db or bot_key_v == '':
                             continue
 
-                        keys_not_in_db[vpn_key_v] = {'protocol':'vless', 'ip_server':ip}
-                        logger.debug(f'{index + 1} - {traffic} - {vpn_key_v}')
+                        keys_not_in_db[bot_key_v] = {'protocol':'vless', 'ip_server':ip}
+                        logger.debug(f'{index + 1} - {traffic} - {bot_key_v}')
                 else:
                     logger.warning(f'🛑Cервер {ip} VLESS не отвечает!')
 
                 logger.debug(f'🔄Проверяем ключи на сервере {ip} WireGuard')
-                wg_data = await exec_command_in_http_server(ip=server['ip'], password=server['password'], command=f'pivpn -c')
+                wg_data = await exec_command_in_http_server(ip=server['ip'], password=server['password'], command=f'pibot -c')
                 if wg_data:
                     for index, line in enumerate(wg_data.split('\n')):
                         try:
@@ -5278,9 +5278,9 @@ class CHECK_KEYS:
                                 line = line.replace('  ', ' ')
                             line = line.split(' ')
 
-                            vpn_key_w = line[0]
+                            bot_key_w = line[0]
 
-                            if vpn_key_w == '':
+                            if bot_key_w == '':
                                 continue
                             try:
                                 trafic_mb = line[4]
@@ -5297,12 +5297,12 @@ class CHECK_KEYS:
                             except:
                                 trafic_mb = 0
 
-                            if vpn_key_w in keys_in_db or vpn_key_w == '':
+                            if bot_key_w in keys_in_db or bot_key_w == '':
                                 continue
 
-                            keys_not_in_db[vpn_key_w] = {'protocol':'wireguard', 'ip_server':ip}
+                            keys_not_in_db[bot_key_w] = {'protocol':'wireguard', 'ip_server':ip}
                             dis = '[disabled] ' if is_off else ''
-                            logger.debug(f'{index + 1} - {trafic_mb} - {dis}{vpn_key_w}')
+                            logger.debug(f'{index + 1} - {trafic_mb} - {dis}{bot_key_w}')
                         except:
                             pass
                 else:
@@ -5310,12 +5310,12 @@ class CHECK_KEYS:
 
             logger.debug('🔄Запущено удаление ключей, которых нет в БД...')
             for key in keys_not_in_db.keys():
-                vpn_key = key
+                bot_key = key
                 protocol = keys_not_in_db[key]['protocol']
                 ip_server = keys_not_in_db[key]['ip_server']
 
-                logger.debug(f'🔑Удаляем ключ {vpn_key} на сервере {ip_server} протокол {protocol} (якобы)')
-                await KEYS_ACTIONS.deleteKey(protocol, vpn_key, ip_server)
+                logger.debug(f'🔑Удаляем ключ {bot_key} на сервере {ip_server} протокол {protocol} (якобы)')
+                await KEYS_ACTIONS.deleteKey(protocol, bot_key, ip_server)
         except:
             await Print_Error()
 
@@ -5323,7 +5323,7 @@ class CHECK_KEYS:
     async def keys_vless_clear_date():
         try:
             # получить все ключи, которые есть на сервере, но нет в БД
-            keys_in_db = await DB.get_qr_key_for_check_keys() # VPN_Key, Protocol, ip_server, User_id, Date, CountDaysBuy, isActive
+            keys_in_db = await DB.get_qr_key_for_check_keys() # BOT_Key, Protocol, ip_server, User_id, Date, CountDaysBuy, isActive
             keys_in_db = {item[0]:item for item in keys_in_db}
 
             for server in SERVERS:
@@ -5334,15 +5334,15 @@ class CHECK_KEYS:
                     vless = VLESS(server['ip'], server['password'])
                     vless_data = vless.activ_list()
                     for key in vless_data:
-                        vpn_key = key[0]
+                        bot_key = key[0]
 
-                        if vpn_key in keys_in_db:
-                            isActiv = keys_in_db[vpn_key][6]
+                        if bot_key in keys_in_db:
+                            isActiv = keys_in_db[bot_key][6]
                         else:
                             isActiv = False
 
-                        await vless.addOrUpdateKey(vpn_key, isUpdate=True, isActiv=isActiv)
-                        logger.debug(f'📆У ключа {vpn_key} очищена дата окончания')
+                        await vless.addOrUpdateKey(bot_key, isUpdate=True, isActiv=isActiv)
+                        logger.debug(f'📆У ключа {bot_key} очищена дата окончания')
                 except Exception as e:
                     await Print_Error()
                     logger.warning(f'🛑Cервер {ip} VLESS не отвечает: {e}')
@@ -5457,49 +5457,49 @@ class PPTP:
         logger.debug(f'✅✅✅Настройка сервера PPTP завершена!')
         return True
 
-    async def add_key(self, vpn_key):
+    async def add_key(self, bot_key):
         try:
-            login = vpn_key
+            login = bot_key
             password = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
             command = f"echo '{login}  pptpd  {password}  \"*\"' >> /etc/ppp/chap-secrets"
 
-            logger.debug(f'🔄Добавляем PPTP ключ {vpn_key} на сервере {self.ip}...')
+            logger.debug(f'🔄Добавляем PPTP ключ {bot_key} на сервере {self.ip}...')
 
             result = await exec_command_in_http_server(ip=self.ip, password=self.password, command=command, read_timeout=5)
-            logger.debug(f'✅PPTP ключ {vpn_key} на сервер {self.ip} успешно добавлен! {result=}')
+            logger.debug(f'✅PPTP ключ {bot_key} на сервер {self.ip} успешно добавлен! {result=}')
             return (login, password)
         except:
             await Print_Error()
 
-    async def off_key(self, vpn_key):
+    async def off_key(self, bot_key):
         try:
-            command = f'sed -i "s/{vpn_key}/# {vpn_key}/g" /etc/ppp/chap-secrets'
-            logger.debug(f'🔄Отключаем PPTP ключ {vpn_key} на сервере {self.ip}...')
+            command = f'sed -i "s/{bot_key}/# {bot_key}/g" /etc/ppp/chap-secrets'
+            logger.debug(f'🔄Отключаем PPTP ключ {bot_key} на сервере {self.ip}...')
             
             result = await exec_command_in_http_server(ip=self.ip, password=self.password, command=command, read_timeout=5)
-            logger.debug(f'✅PPTP ключ {vpn_key} на сервер {self.ip} успешно отключен! {result=}')
+            logger.debug(f'✅PPTP ключ {bot_key} на сервер {self.ip} успешно отключен! {result=}')
             return True
         except:
             await Print_Error()
 
-    async def on_key(self, vpn_key):
+    async def on_key(self, bot_key):
         try:
-            command = f'sed -i "s/# {vpn_key}/{vpn_key}/g" /etc/ppp/chap-secrets'
-            logger.debug(f'🔄Включаем PPTP ключ {vpn_key} на сервере {self.ip}...')
+            command = f'sed -i "s/# {bot_key}/{bot_key}/g" /etc/ppp/chap-secrets'
+            logger.debug(f'🔄Включаем PPTP ключ {bot_key} на сервере {self.ip}...')
         
             result = await exec_command_in_http_server(ip=self.ip, password=self.password, command=command, read_timeout=5)
-            logger.debug(f'✅PPTP ключ {vpn_key} на сервер {self.ip} успешно включен! {result=}')
+            logger.debug(f'✅PPTP ключ {bot_key} на сервер {self.ip} успешно включен! {result=}')
             return True
         except:
             await Print_Error()
 
-    async def delete_key(self, vpn_key):
+    async def delete_key(self, bot_key):
         try:
-            command = f'sed -i "/{vpn_key}/d" /etc/ppp/chap-secrets'
-            logger.debug(f'🔄Удаляем PPTP ключ {vpn_key} на сервере {self.ip}...')
+            command = f'sed -i "/{bot_key}/d" /etc/ppp/chap-secrets'
+            logger.debug(f'🔄Удаляем PPTP ключ {bot_key} на сервере {self.ip}...')
             
             result = await exec_command_in_http_server(ip=self.ip, password=self.password, command=command, read_timeout=5)
-            logger.debug(f'✅PPTP ключ {vpn_key} на сервер {self.ip} успешно удален! {result=}')
+            logger.debug(f'✅PPTP ключ {bot_key} на сервер {self.ip} успешно удален! {result=}')
             return True
         except:
             await Print_Error()
@@ -5857,7 +5857,7 @@ async def exec_command_in_http_server(ip='', password='', path='', command='', r
                                 if result['success']:
                                     # Получили успешный ответ
                                     if path != '':
-                                        return f'#{NAME_VPN_CONFIG}\n{result["data"]}'
+                                        return f'#{NAME_BOT_CONFIG}\n{result["data"]}'
                                     else:
                                         logger.debug(f'Выполнили команду на сервере ({ip, password, path, command}): {result["data"]}')
                                         return result['data']
@@ -6297,7 +6297,7 @@ async def show_logs(user_id_send, user_id):
         nick = f'<h3>Ник: <a href="https://t.me/{client[0]}">@{client[0]}</a></h3>'
 
     keys = ""
-    keys_data = await DB.get_user_keys(user_id) # VPN_Key, OS, isAdminKey, Date, CountDaysBuy, ip_server, isActive
+    keys_data = await DB.get_user_keys(user_id) # BOT_Key, OS, isAdminKey, Date, CountDaysBuy, ip_server, isActive
     keys_yes = False
     if len(keys_data) > 0:
         keys = "<h2>Ключи клиента</h2>"
@@ -6499,7 +6499,7 @@ async def add_new_server_ssh(user_id=None, ip='', password=''):
                         await send_admins(None, f'🛑Не удалось обратиться к серверу при настройке нового сервера "{ip}", другая ошибка', f'⚠️Ошибка:\n{e}')
                         return None
 
-            install_wireguard = '''echo -e 'IPv4dev=\'$(ip -o -4 route show to default | awk \'{print $5}\')\'\n''' + f'''install_user={NO_ROOT_USER}\npivpnDNS1=1.1.1.1\npivpnDNS2=8.8.8.8\npivpnPORT=29152\npivpnforceipv6route=0\npivpnforceipv6=0\npivpnenableipv6=0' > wg0.conf'''
+            install_wireguard = '''echo -e 'IPv4dev=\'$(ip -o -4 route show to default | awk \'{print $5}\')\'\n''' + f'''install_user={NO_ROOT_USER}\npibotDNS1=1.1.1.1\npibotDNS2=8.8.8.8\npibotPORT=29152\npibotforceipv6route=0\npibotforceipv6=0\npibotenableipv6=0' > wg0.conf'''
 
             commands = [
                 f'{install_wireguard}',
@@ -6513,7 +6513,7 @@ async def add_new_server_ssh(user_id=None, ip='', password=''):
                 "sudo apt-get install -y python3-pip",
                 "pip3 install speedtest-cli",
 
-                "curl -L https://install.pivpn.io > install.sh",
+                "curl -L https://install.pibot.io > install.sh",
                 "chmod +x install.sh",
                 "./install.sh --unattended wg0.conf",
                 "rm -rf wg0.conf",
@@ -6524,7 +6524,7 @@ async def add_new_server_ssh(user_id=None, ip='', password=''):
 
                 # "curl -sSL https://get.docker.com | sh",
                 # "sudo usermod -aG docker $(whoami)",
-                "docker run -d -p 51821:51821 --name pivpn-web --restart=unless-stopped weejewel/pivpn-web",
+                "docker run -d -p 51821:51821 --name pibot-web --restart=unless-stopped weejewel/pibot-web",
 
                 "sudo apt-get install -y fail2ban",
                 "systemctl enable fail2ban",
@@ -6808,7 +6808,7 @@ async def get_user_keys(user_id, prodlit=False, oplacheno=False, change_protocol
         user = await user_get(user_id)
         mes_del = await send_message(user_id, user.lang.get('tx_wait'))
         
-        keys_data = await DB.get_user_keys(user_id) # qr.VPN_Key, qr.OS, qr.isAdminKey, qr.Date, qr.CountDaysBuy, qr.ip_server, qr.isActive, qr.Protocol, sr.Location, qr.Keys_Data, qr.User_id, qr.Podpiska
+        keys_data = await DB.get_user_keys(user_id) # qr.BOT_Key, qr.OS, qr.isAdminKey, qr.Date, qr.CountDaysBuy, qr.ip_server, qr.isActive, qr.Protocol, sr.Location, qr.Keys_Data, qr.User_id, qr.Podpiska
         if len(keys_data) > 0:
             klava = InlineKeyboardMarkup()
             keys_yes = False
@@ -6829,7 +6829,7 @@ async def get_user_keys(user_id, prodlit=False, oplacheno=False, change_protocol
             count_keys = 0
             is_yes_payment_id = False
             for item in keys_data:
-                vpn_key = item[0]
+                bot_key = item[0]
                 isActive = bool(item[6])
                 location = item[8]
                 protocol = item[7]
@@ -6863,9 +6863,9 @@ async def get_user_keys(user_id, prodlit=False, oplacheno=False, change_protocol
                     count_days_to_off_text = f' ({count_days_to_off} {await dney(count_days_to_off, user)})'
 
                     try:
-                        name_vpn_key = f'{vpn_key.split("_")[2]}'
+                        name_bot_key = f'{bot_key.split("_")[2]}'
                     except:
-                        name_vpn_key = vpn_key.lower().replace(NAME_VPN_CONFIG.lower(), '').replace('_','',1)
+                        name_bot_key = bot_key.lower().replace(NAME_BOT_CONFIG.lower(), '').replace('_','',1)
                 else:
                     count_days_to_off_text = ''
 
@@ -6877,30 +6877,30 @@ async def get_user_keys(user_id, prodlit=False, oplacheno=False, change_protocol
                                 p_name = paket[1]
                                 break
                     if p_name:
-                        name_vpn_key = p_name
+                        name_bot_key = p_name
                     else:
                         try:
-                            name_vpn_key = f'{vpn_key.split("_")[2]}'
+                            name_bot_key = f'{bot_key.split("_")[2]}'
                         except:
-                            name_vpn_key = vpn_key.lower().replace(NAME_VPN_CONFIG.lower(), '').replace('_','',1)
+                            name_bot_key = bot_key.lower().replace(NAME_BOT_CONFIG.lower(), '').replace('_','',1)
 
                 if not isActive:
                     count_days_to_off_text = ''
 
-                name_key_for_but = f'🔑{name_vpn_key}{count_days_to_off_text} ({protocol}{dop_text_protocol})'
-                call_data = f'keys:{user_id}:{vpn_key}{dop_text}'
+                name_key_for_but = f'🔑{name_bot_key}{count_days_to_off_text} ({protocol}{dop_text_protocol})'
+                call_data = f'keys:{user_id}:{bot_key}{dop_text}'
                 but_key = InlineKeyboardButton(text=name_key_for_but, callback_data=call_data)
 
                 if payment_id and dop_text == ':download':
                     is_yes_payment_id = True
-                    but_cancel = InlineKeyboardButton(text='❌', callback_data=f'cancel_auto:{vpn_key}')
+                    but_cancel = InlineKeyboardButton(text='❌', callback_data=f'cancel_auto:{bot_key}')
                     klava.add(but_key, but_cancel)
                 elif STOP_KEY and dop_text == ':download' and protocol in ('vless','wireguard','pptp'):
                     if isActive:
                         text_galochka = '✅'
                     else:
                         text_galochka = '☑️'
-                    but_stop = InlineKeyboardButton(text=text_galochka, callback_data=f'off_key:{vpn_key}:{1 if isActive else 0}')
+                    but_stop = InlineKeyboardButton(text=text_galochka, callback_data=f'off_key:{bot_key}:{1 if isActive else 0}')
                     klava.add(but_key, but_stop)
                 else:
                     klava.add(but_key)
@@ -6984,7 +6984,7 @@ async def check_keys_all():
             async with semaphore:
                 try:
                     logger.debug(f'🔄Проверка ключа: {line}')
-                    vpn_key = line[0]
+                    bot_key = line[0]
                     date_key = line[1]
                     user_id = line[2]
                     isAdminKey = bool(line[3])
@@ -6999,7 +6999,7 @@ async def check_keys_all():
                     summ = line[14]
 
                     if isAdminKey: # Если ключ админский, пропускаем проверку
-                        logger.debug(f'🔄Ключ {vpn_key} админский, пропускаем проверку')
+                        logger.debug(f'🔄Ключ {bot_key} админский, пропускаем проверку')
                         return
 
                     try: date_start = datetime.strptime(date_key, '%Y_%m_%d')
@@ -7042,17 +7042,17 @@ async def check_keys_all():
                         if not TEST:
                             if not isActive:
                                 if days_for_close_period < -1:
-                                    logger.debug(f'❌Удаляем ключ: {vpn_key}')
-                                    await KEYS_ACTIONS.deleteKey(protocol, vpn_key, ip_server, date_key, CountDaysBuy, user_id)
+                                    logger.debug(f'❌Удаляем ключ: {bot_key}')
+                                    await KEYS_ACTIONS.deleteKey(protocol, bot_key, ip_server, date_key, CountDaysBuy, user_id)
                                     return
 
                         # если он подпишется, его конфигурация снова заработает после нажатия на кнопку проверки подписок для этого ключа
                         klava = InlineKeyboardMarkup()
                         user = await user_get(user_id)
-                        but_key = InlineKeyboardButton(text=user.lang.get('tx_podpiska_check'), callback_data=f'check_sub:{user_id}:{Podpiska}:{vpn_key}')
+                        but_key = InlineKeyboardButton(text=user.lang.get('tx_podpiska_check'), callback_data=f'check_sub:{user_id}:{Podpiska}:{bot_key}')
                         klava.add(but_key)
                         try:
-                            message_del = await send_message(user_id, user.lang.get('tx_close_period_podpiska').format(name_vpn=NAME_VPN_CONFIG, but=user.lang.get('tx_podpiska_check')), no_log=True, reply_markup=klava)
+                            message_del = await send_message(user_id, user.lang.get('tx_close_period_podpiska').format(name_bot=NAME_BOT_CONFIG, but=user.lang.get('tx_podpiska_check')), no_log=True, reply_markup=klava)
                             user = await user_get(user_id)
                             user.message_del_id = message_del.message_id
                         except:
@@ -7060,15 +7060,15 @@ async def check_keys_all():
 
                         # Перебрать все сервера и у всех выключить этот доступ
                         if not TEST:
-                            await KEYS_ACTIONS.deactivateKey(protocol, vpn_key, ip_server, date_key, CountDaysBuy, user_id)
+                            await KEYS_ACTIONS.deactivateKey(protocol, bot_key, ip_server, date_key, CountDaysBuy, user_id)
                             if protocol in ('wireguard', 'vless', 'pptp'):
-                                logger.debug(f'❌Отключаем ключ: {vpn_key}')
-                                await DB.On_Off_qr_key(isOn=False, name_vpn_key=vpn_key)
+                                logger.debug(f'❌Отключаем ключ: {bot_key}')
+                                await DB.On_Off_qr_key(isOn=False, name_bot_key=bot_key)
                             else:
-                                logger.debug(f'❌Удаляем ключ: {vpn_key}')
-                                await DB.delete_qr_key(vpn_key)
+                                logger.debug(f'❌Удаляем ключ: {bot_key}')
+                                await DB.delete_qr_key(bot_key)
 
-                        client2 = f'Ключ: <b><code>{vpn_key}</code></b>'
+                        client2 = f'Ключ: <b><code>{bot_key}</code></b>'
                         if not IS_OTCHET:
                             await send_admins(user_id, '🟡Ключ отключен (не подписан)', client2)
                         return
@@ -7081,13 +7081,13 @@ async def check_keys_all():
                     if not isActive:
                         if not TEST:
                             # проверяем, отключен ли ключ клиентом, если да, то выходим из функции
-                            date_off = await DB.get_date_off_key(vpn_key)
+                            date_off = await DB.get_date_off_key(bot_key)
                             if date_off:
                                 return
                             
                             # if days_for_close_period < -1:
-                            logger.debug(f'❌Удаляем ключ: {vpn_key}')
-                            await KEYS_ACTIONS.deleteKey(protocol, vpn_key, ip_server, date_key, CountDaysBuy, user_id)
+                            logger.debug(f'❌Удаляем ключ: {bot_key}')
+                            await KEYS_ACTIONS.deleteKey(protocol, bot_key, ip_server, date_key, CountDaysBuy, user_id)
                         return
 
                     # Если осталось 1 день, то отправляем сообщение о том, что ключ отключен
@@ -7103,7 +7103,7 @@ async def check_keys_all():
                                 else:
                                     operacia = await user.PAY_WALLET.rec_pay(user, summ, payment_id)
 
-                                logger.debug(f'{user_id} - 🔄Проверка рекуррентной оплаты ключа "{vpn_key}" (user.PAY_WALLET.isTinfkoffPay={user.PAY_WALLET.isTinfkoffPay}, RebillId="{RebillId}", operacia={operacia})')
+                                logger.debug(f'{user_id} - 🔄Проверка рекуррентной оплаты ключа "{bot_key}" (user.PAY_WALLET.isTinfkoffPay={user.PAY_WALLET.isTinfkoffPay}, RebillId="{RebillId}", operacia={operacia})')
 
                                 is_paid = operacia[0]
                                 summ = operacia[1]
@@ -7111,28 +7111,28 @@ async def check_keys_all():
                                 user.paymentDescription = desc
 
                                 if is_paid:
-                                    await DB.add_day_qr_key_in_DB(user_id, CountDaysBuy, vpn_key, summ, payment_id)
-                                    await add_days(user_id, vpn_key, day=CountDaysBuy, silent=True)
+                                    await DB.add_day_qr_key_in_DB(user_id, CountDaysBuy, bot_key, summ, payment_id)
+                                    await add_days(user_id, bot_key, day=CountDaysBuy, silent=True)
                                     if not IS_OTCHET:
-                                        await send_admins(user_id, 'Продление ключа', f'<code>{vpn_key}</code> (<b>{summ}</b>₽)')
+                                        await send_admins(user_id, 'Продление ключа', f'<code>{bot_key}</code> (<b>{summ}</b>₽)')
                                     await DB.add_otchet('prodleny')
                                     return
 
                         # Перебрать все сервера и у всех выключить этот доступ
                         if not TEST:
-                            await KEYS_ACTIONS.deactivateKey(protocol, vpn_key, ip_server, date_key, CountDaysBuy, user_id)
+                            await KEYS_ACTIONS.deactivateKey(protocol, bot_key, ip_server, date_key, CountDaysBuy, user_id)
                             if protocol in ('wireguard', 'vless', 'pptp'):
-                                logger.debug(f'❌Отключаем ключ: {vpn_key}')
-                                await DB.On_Off_qr_key(isOn=False, name_vpn_key=vpn_key)
+                                logger.debug(f'❌Отключаем ключ: {bot_key}')
+                                await DB.On_Off_qr_key(isOn=False, name_bot_key=bot_key)
                             else:
-                                logger.debug(f'❌Удаляем ключ: {vpn_key}')
-                                await DB.delete_qr_key(vpn_key)
+                                logger.debug(f'❌Удаляем ключ: {bot_key}')
+                                await DB.delete_qr_key(bot_key)
 
                         if not user_id in users_send_close_repiod:
                             users_send_close_repiod[user_id] = True
                             
                             user = await user_get(user_id)
-                            text = user.lang.get('tx_close_period').format(name_vpn=NAME_VPN_CONFIG, valuta=user.valuta, summ=user.tarif_1_text)
+                            text = user.lang.get('tx_close_period').format(name_bot=NAME_BOT_CONFIG, valuta=user.valuta, summ=user.tarif_1_text)
 
                             if OBESH_PLATEZH and protocol in ('wireguard', 'vless', 'pptp'):
                                 await buy_message(user_id=user_id, obesh=True, text_send=text)
@@ -7144,7 +7144,7 @@ async def check_keys_all():
                         except: date_key_str = date_key
 
                         if not IS_OTCHET:
-                            await send_admins(user_id, '🟡Ключ отключен', f'<code>{vpn_key}</code> ({date_key_str}, {CountDaysBuy} {await dney(CountDaysBuy)})')
+                            await send_admins(user_id, '🟡Ключ отключен', f'<code>{bot_key}</code> ({date_key_str}, {CountDaysBuy} {await dney(CountDaysBuy)})')
                         await DB.add_otchet('off_key')
                         #endregion
 
@@ -7155,13 +7155,13 @@ async def check_keys_all():
                         
                         users_send_close_repiod[user_id] = True
                         
-                        logger.debug(f'🔄Отправляю предупреждение пользователю о скором конце срока ключа days_raz={days_for_close_period}: {vpn_key}')
+                        logger.debug(f'🔄Отправляю предупреждение пользователю о скором конце срока ключа days_raz={days_for_close_period}: {bot_key}')
 
                         if payment_id != '' and AUTO_PAY_YKASSA:
                             await send_message(user_id, user.lang.get('tx_tommorow_auto') if days_for_close_period == 1 else user.lang.get('tx_after_2_days_auto'), no_log=True)
                         else:
                             user = await user_get(user_id)
-                            user.isProdleniye = vpn_key
+                            user.isProdleniye = bot_key
                             text_send = user.lang.get('tx_tommorow') if days_for_close_period == 1 else user.lang.get('tx_after_2_days')
                             text_send += '\n\n' + user.lang.get('tx_prodlt')
                             await buy_message(user_id=user_id, text_send=text_send)
@@ -7219,7 +7219,7 @@ async def ckeck_clients_no_keys():
                         
                         but = InlineKeyboardButton(text=user.lang.get('but_test_key'), callback_data=f'buttons:test_key_get')
                         klava.add(but)
-                        await send_message(client_id, user.lang.get('tx_reg_no_keys').format(name_vpn=NAME_VPN_CONFIG, days=COUNT_DAYS_TRIAL, dney_text=await dney(COUNT_DAYS_TRIAL, user)),reply_markup=klava, no_log=True)
+                        await send_message(client_id, user.lang.get('tx_reg_no_keys').format(name_bot=NAME_BOT_CONFIG, days=COUNT_DAYS_TRIAL, dney_text=await dney(COUNT_DAYS_TRIAL, user)),reply_markup=klava, no_log=True)
 
         clients = await DB.get_users_id_clients_no_keys()
         tasks = []
@@ -7461,7 +7461,7 @@ async def send_start_message(message, priglacili = False):
         user.isPayChangeLocations = False
 
         if is_invited:
-            invitation_text = user.lang.get('tx_start_invite').format(name=user_first_name, name_vpn=NAME_VPN_CONFIG)
+            invitation_text = user.lang.get('tx_start_invite').format(name=user_first_name, name_bot=NAME_BOT_CONFIG)
         else:
             invitation_text = user.lang.get('tx_hello').format(name=user_first_name)
 
@@ -7471,7 +7471,7 @@ async def send_start_message(message, priglacili = False):
             klava.add(InlineKeyboardButton(text=user.lang.get('but_test_key'), callback_data=f'buttons:test_key_get'))
         klava.add(InlineKeyboardButton(text=user.lang.get('but_connect'), callback_data=f'buttons:but_connect'))
 
-        _tx_start = user.lang.get('tx_start').format(name_author=NAME_AUTHOR_VPN, but_1=user.lang.get('but_connect'), but_2=user.lang.get('but_desription'))
+        _tx_start = user.lang.get('tx_start').format(name_author=NAME_AUTHOR_BOT, but_1=user.lang.get('but_connect'), but_2=user.lang.get('but_desription'))
 
         if INLINE_MODE:
             invitation_text += f'\n\n{_tx_start}'
@@ -7555,9 +7555,9 @@ async def help_messages(message):
 
 async def new_key(user_id, day=30, is_Admin=0, promo='', help_message=False, summ=0, bill_id='', protocol=PR_DEFAULT, date=None, ip_server=None, silent=False, isChangeLocation=False, RebillId='', Podpiska=-1, summ_tarif=-1):
     try:
-        global NAME_VPN_CONFIG
-        NAME_VPN_CONFIG = NAME_VPN_CONFIG.replace('_','').replace('-','').replace(' ','')
-        NAME_VPN_CONFIG = NAME_VPN_CONFIG[:8]
+        global NAME_BOT_CONFIG
+        NAME_BOT_CONFIG = NAME_BOT_CONFIG.replace('_','').replace('-','').replace(' ','')
+        NAME_BOT_CONFIG = NAME_BOT_CONFIG[:8]
 
         isChangeProtocol = not ip_server is None
 
@@ -7611,7 +7611,7 @@ async def new_key(user_id, day=30, is_Admin=0, promo='', help_message=False, sum
         if protocol in ('wireguard', 'vless', 'pptp'):
             while True:
                 logger.debug(f'{user_id} - {protocol} создание названия и путей')
-                conf_name = f'{NAME_VPN_CONFIG}_{random.randint(1,9)}{random.randint(1,9)}{count_keys}{random.randint(1,9)}'
+                conf_name = f'{NAME_BOT_CONFIG}_{random.randint(1,9)}{random.randint(1,9)}{count_keys}{random.randint(1,9)}'
                 conf_name_local = conf_name.lower()
                 logger.debug(f'{user_id} - Получил названия ключей conf_name = {conf_name} и conf_name_local = {conf_name_local}')
                 path_to_conf_server = f'/home/{NO_ROOT_USER}/configs/{conf_name}.conf'
@@ -7623,7 +7623,7 @@ async def new_key(user_id, day=30, is_Admin=0, promo='', help_message=False, sum
                     break
 
         # if len(conf_name) > 15:
-        #     await send_admins(user_id, '🛑Уменьшите длину NAME_VPN_CONFIG в /get_config', f'Название: <b>{conf_name} > 15 символов!</b>')
+        #     await send_admins(user_id, '🛑Уменьшите длину NAME_BOT_CONFIG в /get_config', f'Название: <b>{conf_name} > 15 символов!</b>')
         #endregion
 
         #region Выбор сервера
@@ -7776,26 +7776,26 @@ async def new_key(user_id, day=30, is_Admin=0, promo='', help_message=False, sum
                 if check_:
                     if protocol == 'wireguard':
                         logger.debug(f'{user_id} - Wireguard создание ключа')
-                        text = await exec_command_in_http_server(ip=server['ip'], password=server['password'], command=f'pivpn -a -n {conf_name}', path=path_to_conf_server, read_timeout=10)
+                        text = await exec_command_in_http_server(ip=server['ip'], password=server['password'], command=f'pibot -a -n {conf_name}', path=path_to_conf_server, read_timeout=10)
                         if text:
                             logger.debug(f'{user_id} - Wireguard ключ создан')
                             break
                     elif protocol == 'outline':
                         logger.debug(f'{user_id} - Outline создание ключа')
-                        cl = OutlineVPN(server['api_url'], server['cert_sha256'])
+                        cl = OutlineBOT(server['api_url'], server['cert_sha256'])
                         logger.debug(f'{user_id} - Outline создание ключа cl = {cl}')
                         text = cl.create_key()
                         if text:
                             logger.debug(f'{user_id} - Outline создание ключа text = {text}')
                             while True:
-                                conf_name = f'{NAME_VPN_CONFIG}_{user_id}_{text.key_id}_{random.randint(10,99)}'
+                                conf_name = f'{NAME_BOT_CONFIG}_{user_id}_{text.key_id}_{random.randint(10,99)}'
                                 # проверить, чтобы данного ключа не было в БД, если есть, попробовать создать еще раз
                                 if not await DB.exists_key(conf_name):
                                     break
                             logger.debug(f'{user_id} - Outline создание ключа conf_name = {conf_name}')
                             cl.rename_key(text.key_id, conf_name)
                             logger.debug(f'{user_id} - Outline создание ключа cl.rename_key')
-                            text = f"{text.access_url}#{NAME_VPN_CONFIG}:{server['location']} - {conf_name.split('_')[-2]}"
+                            text = f"{text.access_url}#{NAME_BOT_CONFIG}:{server['location']} - {conf_name.split('_')[-2]}"
                             break
                     elif protocol == 'vless':
                         logger.debug(f'{user_id} - VLESS создание ключа')
@@ -7806,7 +7806,7 @@ async def new_key(user_id, day=30, is_Admin=0, promo='', help_message=False, sum
                             
                             key = await marzban.create_new_key(conf_name, date, day)
                             logger.debug(f'{user_id} - VLESS ключ создан')
-                            text = f'{key}#🤖{NAME_VPN_CONFIG}'
+                            text = f'{key}#🤖{NAME_BOT_CONFIG}'
                             break
                         else:
                             vless = VLESS(server['ip'], server['password'])
@@ -8001,7 +8001,7 @@ async def plus_days_ref(user_id, id_ref, help_message=False):
                 # если у клиента нет qr, выдать ему его на COUNT_DAYS_REF дн
                 await new_key(id_ref, COUNT_DAYS_REF, help_message=help_message, protocol=protocol)
                 await send_message(id_ref, user.lang.get('tx_add_days_by_ref').format(days=COUNT_DAYS_REF, dney_text=await dney(COUNT_DAYS_REF, user)))
-            await send_message(id_ref, user.lang.get('tx_thanks_ref').format(name_vpn=NICK_HELP))
+            await send_message(id_ref, user.lang.get('tx_thanks_ref').format(name_bot=NICK_HELP))
     except:
         await Print_Error()
 
@@ -8781,27 +8781,27 @@ async def history_message(message):
 
 async def transfer_keys(message, all_keys_data, select_servers, one=False):
     try:
-        async def delete_key(user_id, vpn_key):
+        async def delete_key(user_id, bot_key):
             try:
                 date = None
                 CountDaysBuy = None
 
-                lines = await DB.get_qr_key_All(user_id) # VPN_Key, Date, User_id, isAdminKey, CountDaysBuy, ip_server, isActive, Protocol, isChangeProtocol, DateChangeProtocol, Payment_id
+                lines = await DB.get_qr_key_All(user_id) # BOT_Key, Date, User_id, isAdminKey, CountDaysBuy, ip_server, isActive, Protocol, isChangeProtocol, DateChangeProtocol, Payment_id
                 for line in lines:
                     ip_server = line[5]
-                    vpn_key1 = line[0]
+                    bot_key1 = line[0]
                     protocol = line[7]
                     date = line[1]
                     CountDaysBuy = line[4]
 
-                    if vpn_key == vpn_key1:
-                        await KEYS_ACTIONS.deleteKey(protocol, vpn_key, ip_server, date, CountDaysBuy, user_id)
+                    if bot_key == bot_key1:
+                        await KEYS_ACTIONS.deleteKey(protocol, bot_key, ip_server, date, CountDaysBuy, user_id)
                         break
                 
-                await DB.delete_qr_key(vpn_key)
+                await DB.delete_qr_key(bot_key)
 
                 if not IS_OTCHET:
-                    await send_admins(user_id, 'Перенос (🔑 удален)', f'<b>{vpn_key}</b> ({date}, {CountDaysBuy} {await dney(CountDaysBuy)}, {ip_server}, {protocol})')
+                    await send_admins(user_id, 'Перенос (🔑 удален)', f'<b>{bot_key}</b> ({date}, {CountDaysBuy} {await dney(CountDaysBuy)}, {ip_server}, {protocol})')
                 return (date, CountDaysBuy)
             except:
                 await Print_Error()
@@ -8932,7 +8932,7 @@ async def transfer_message(message):
                 # (снизу отобразить список текущих ключей)
                 # Приятного пользования сервисом, если что-то будет не понятно, пишите @сюда
 
-                all_keys_data = await DB.get_qr_key_All() # VPN_Key, Date, User_id, isAdminKey, CountDaysBuy, ip_server, isActive, Protocol, isChangeProtocol, DateChangeProtocol, Payment_id
+                all_keys_data = await DB.get_qr_key_All() # BOT_Key, Date, User_id, isAdminKey, CountDaysBuy, ip_server, isActive, Protocol, isChangeProtocol, DateChangeProtocol, Payment_id
                 servers_perenos = []
                 keys_for_perenos = []
                 for key in all_keys_data:
@@ -9014,7 +9014,7 @@ async def transfer_one_message(message):
                 # (снизу отобразить список текущих ключей)
                 # Приятного пользования сервисом, если что-то будет не понятно, пишите @сюда
 
-                all_keys_data = await DB.get_qr_key_All() # VPN_Key, Date, User_id, isAdminKey, CountDaysBuy, ip_server, isActive, Protocol, isChangeProtocol, DateChangeProtocol, Payment_id
+                all_keys_data = await DB.get_qr_key_All() # BOT_Key, Date, User_id, isAdminKey, CountDaysBuy, ip_server, isActive, Protocol, isChangeProtocol, DateChangeProtocol, Payment_id
                 servers_perenos = []
                 keys_for_perenos = []
                 for key in all_keys_data:
@@ -9932,7 +9932,7 @@ async def report_message(message):
 
             #region Подсчет кол-ва ключей, у которых закончится доступ через {COUNT_DAYS_OTCHET}
             count_off_days = 0
-            lines = await DB.get_qr_key_All() # VPN_Key, Date, User_id, isAdminKey, CountDaysBuy, ip_server 
+            lines = await DB.get_qr_key_All() # BOT_Key, Date, User_id, isAdminKey, CountDaysBuy, ip_server 
 
             for line in set(lines):
                 date_key = line[1]
@@ -10020,7 +10020,7 @@ async def buy_message(message=None, is_buy=False, isPodpiska=False, user_id=None
                     klava.add(InlineKeyboardButton(text=user.lang.get('but_prodlit_key'), callback_data=f'buttons:but_prodlit_key'))
                 else:
                     for item in keys_user:
-                        vpn_key = item[0]
+                        bot_key = item[0]
                         date_start = item[3]
                         CountDaysBuy = int(item[4])
                         ip_server = item[5]
@@ -10036,14 +10036,14 @@ async def buy_message(message=None, is_buy=False, isPodpiska=False, user_id=None
                         count_days_to_off = count_days_to_off if count_days_to_off > 0 else 0
                         count_days_to_off_text = f' ({count_days_to_off} {await dney(count_days_to_off, user)})'
 
-                        try: name_vpn_key = f'{vpn_key.split("_")[2]}'
+                        try: name_bot_key = f'{bot_key.split("_")[2]}'
                         except: 
-                            name_vpn_key = vpn_key.lower().replace(NAME_VPN_CONFIG.lower(), '')
-                            if name_vpn_key[0] == '_':
-                                name_vpn_key = name_vpn_key.replace('_', '', 1)
+                            name_bot_key = bot_key.lower().replace(NAME_BOT_CONFIG.lower(), '')
+                            if name_bot_key[0] == '_':
+                                name_bot_key = name_bot_key.replace('_', '', 1)
 
-                        name_key_for_but = f'🔑{name_vpn_key}{count_days_to_off_text} ({server_name})'
-                        klava.add(InlineKeyboardButton(text=name_key_for_but, callback_data=f'keys:{user_id}:{vpn_key}:prodlit'))
+                        name_key_for_but = f'🔑{name_bot_key}{count_days_to_off_text} ({server_name})'
+                        klava.add(InlineKeyboardButton(text=name_key_for_but, callback_data=f'keys:{user_id}:{bot_key}:prodlit'))
 
                 if not text_send or is_buy:
                     klava.add(InlineKeyboardButton(text=user.lang.get('but_new_key'), callback_data=f'buttons:but_new_key'))
@@ -11005,20 +11005,20 @@ async def check_pay(bill_id, user, poz, isAdmin=False):
             else:
                 days_plus = await DB.get_user_days_by_buy(user_id)
                 # проверить, что ключ есть в БД
-                if user.bill_vpn_key != '':
-                    is_key_exists_in_db = await DB.exists_key(user.bill_vpn_key)
+                if user.bill_bot_key != '':
+                    is_key_exists_in_db = await DB.exists_key(user.bill_bot_key)
                     if not is_key_exists_in_db:
-                        logger.debug(f'🛑Не удалось продлить ключ, т.к. ключа {user.bill_vpn_key} нет в БД, user_id = {user_id}')
+                        logger.debug(f'🛑Не удалось продлить ключ, т.к. ключа {user.bill_bot_key} нет в БД, user_id = {user_id}')
                 else:
                     is_key_exists_in_db = False
 
                 if is_key_exists_in_db:
-                    vpn_key = user.bill_vpn_key
-                    user.bill_vpn_key = ''
-                    await DB.add_day_qr_key_in_DB(user_id, days_plus, vpn_key, summ, bill_id)
-                    await add_days(user_id, vpn_key, day=days_plus, silent=True)
+                    bot_key = user.bill_bot_key
+                    user.bill_bot_key = ''
+                    await DB.add_day_qr_key_in_DB(user_id, days_plus, bot_key, summ, bill_id)
+                    await add_days(user_id, bot_key, day=days_plus, silent=True)
                     if not IS_OTCHET:
-                        await send_admins(user_id, '✅Продление ключа', f'Ключ: <code>{vpn_key}</code> (<b>+{summ}₽</b>, +{days_plus} {await dney(days_plus)}, {user.Protocol}){bottom_text}')
+                        await send_admins(user_id, '✅Продление ключа', f'Ключ: <code>{bot_key}</code> (<b>+{summ}₽</b>, +{days_plus} {await dney(days_plus)}, {user.Protocol}){bottom_text}')
                     await DB.add_otchet('prodleny')
                 else:
                     await new_key(user_id, day=days_plus, summ=summ, bill_id=bill_id, help_message=True, protocol=user.Protocol, silent=True, RebillId=RebillId)
@@ -11214,7 +11214,7 @@ async def check_promo_is_activ(promo, user_id):
     except:
         await Print_Error()
 
-async def check_user_sub_channels(user_id, id_podpiska, vpn_key=None):
+async def check_user_sub_channels(user_id, id_podpiska, bot_key=None):
     try:
         data = await DB.get_podpiski()
         p_channels_ids = None
@@ -11236,11 +11236,11 @@ async def check_user_sub_channels(user_id, id_podpiska, vpn_key=None):
                 # await delete_message(user_id, user.message_del_id)
                 user.message_del_id = None
 
-            if vpn_key:
-                await DB.add_day_qr_key_in_DB(user_id, 1, vpn_key, 0, '999999')
-                await add_days(user_id, vpn_key, day=-1, silent=True)
+            if bot_key:
+                await DB.add_day_qr_key_in_DB(user_id, 1, bot_key, 0, '999999')
+                await add_days(user_id, bot_key, day=-1, silent=True)
                 if not IS_OTCHET:
-                    await send_admins(user_id, 'Ключ активирован (подписался)', f'<code>{vpn_key}</code> ({user.Protocol})')
+                    await send_admins(user_id, 'Ключ активирован (подписался)', f'<code>{bot_key}</code> ({user.Protocol})')
             else:
                 await new_key(user_id, day=1000, summ=0, bill_id='999999', help_message=True, protocol=user.Protocol, silent=True, Podpiska=id_podpiska)
                 if not IS_OTCHET:
@@ -11264,7 +11264,7 @@ async def off_key_call(call):
         user = await user_get(user_id)
         
         try:
-            key_data = await DB.get_key_by_name(key_name) # VPN_Key, Date, User_id, isAdminKey, CountDaysBuy, ip_server, isActive, Protocol, isChangeProtocol, DateChangeProtocol, Payment_id, RebillId, Podpiska
+            key_data = await DB.get_key_by_name(key_name) # BOT_Key, Date, User_id, isAdminKey, CountDaysBuy, ip_server, isActive, Protocol, isChangeProtocol, DateChangeProtocol, Payment_id, RebillId, Podpiska
             protocol = key_data[7]
             ip_server = key_data[5]
             date_key = key_data[1]
@@ -11279,7 +11279,7 @@ async def off_key_call(call):
         if is_active_key:
             # Если ключ активен, отключаем его и записываем сегодняшнюю дату как дату отключения
             await KEYS_ACTIONS.deactivateKey(protocol, key_name, ip_server, date_key, CountDaysBuy, user_id)
-            await DB.On_Off_qr_key(isOn=False, name_vpn_key=key_name)
+            await DB.On_Off_qr_key(isOn=False, name_bot_key=key_name)
             await DB.set_date_off_key(key_name, date_current)
             await bot.answer_callback_query(callback_query_id=call.id, show_alert=True, text=user.lang.get('tx_off_key_yes').format(key=key_name))
         else:
@@ -11338,9 +11338,9 @@ async def cancel_auto_call(call):
     try:
         message = call.message
         user_id = message.chat.id
-        vpn_key = call.data.split(':')[1]
+        bot_key = call.data.split(':')[1]
 
-        await DB.set_payment_id_by_key(vpn_key, '')
+        await DB.set_payment_id_by_key(bot_key, '')
 
         await bot.answer_callback_query(callback_query_id=call.id, show_alert=True, text="✅Автопродление успешно отключено!")
         await delete_message(user_id, message.message_id)
@@ -11359,12 +11359,12 @@ async def check_sub(call=None, id=None, message=None):
             message = call.message
 
         try:
-            vpn_key = call.data.split(':')[3]
+            bot_key = call.data.split(':')[3]
         except:
-            vpn_key = None
+            bot_key = None
 
         # проверить, чтобы у клиента не было ключа с таким же id подписки
-        data = await DB.get_user_keys(user_id) # qr.VPN_Key, qr.OS, qr.isAdminKey, qr.Date, qr.CountDaysBuy, qr.ip_server, qr.isActive, qr.Protocol, sr.Location, qr.Keys_Data, qr.User_id, qr.Podpiska
+        data = await DB.get_user_keys(user_id) # qr.BOT_Key, qr.OS, qr.isAdminKey, qr.Date, qr.CountDaysBuy, qr.ip_server, qr.isActive, qr.Protocol, sr.Location, qr.Keys_Data, qr.User_id, qr.Podpiska
         if data and len(data) > 0:
             for key in data:
                 if key[10] == id:
@@ -11372,7 +11372,7 @@ async def check_sub(call=None, id=None, message=None):
                     return
 
         # вызвать проверку, если проверка будет успешная, удалить сообщение и выдать ключ
-        result = await check_user_sub_channels(user_id, id, vpn_key)
+        result = await check_user_sub_channels(user_id, id, bot_key)
         if result:
             await delete_message(user_id, message.message_id)
         else:
@@ -11629,10 +11629,10 @@ async def web_call(call):
                 if server:
                     check_ = await check_server_is_work(server['ip'])
                     if check_:
-                        for key in OutlineVPN(server['api_url'], server['cert_sha256']).get_keys():
+                        for key in OutlineBOT(server['api_url'], server['cert_sha256']).get_keys():
                             used = round(key.used_bytes / 1000 / 1000 / 1000, 2) if not key.used_bytes is None else 0
                             used = f'{used} GB' if used >= 1 else f'{used * 1000} MB'
-                            text += f'<b>{key.key_id} - {used} - </b> <code>{key.name}</code>\n🔐 <code>{key.access_url}#{location} - {NAME_VPN_CONFIG}</code>\n\n'
+                            text += f'<b>{key.key_id} - {used} - </b> <code>{key.name}</code>\n🔐 <code>{key.access_url}#{location} - {NAME_BOT_CONFIG}</code>\n\n'
                     else:
                         text += f'⚠️Сервер не отвечает!'
 
@@ -11661,12 +11661,12 @@ async def web_call(call):
                     check_ = await check_server_is_work(server['ip'])
                     if check_:
                         for key in VLESS(server['ip'], server['password']).activ_list():
-                            vpn_key = key[0]
+                            bot_key = key[0]
                             traffic = key[1]
                             url = key[2]
                             used = round(traffic / 1000 / 1000 / 1000, 2)
                             used = f'{used} GB' if used >= 1 else f'{used * 1000} MB'
-                            text += f'<b>{used} - </b> <code>{vpn_key}</code>\n🔐 <code>{url}</code>\n\n'
+                            text += f'<b>{used} - </b> <code>{bot_key}</code>\n🔐 <code>{url}</code>\n\n'
                     else:
                         text += f'⚠️Сервер не отвечает!'
 
@@ -12285,12 +12285,12 @@ async def delete_user_call(call):
                 lines = await DB.get_qr_key_All(user_delete)
                 for line in lines:
                     ip_server = line[5]
-                    vpn_key = line[0]
+                    bot_key = line[0]
                     date = line[1]
                     protocol = line[7]
                     CountDaysBuy = line[4]
 
-                    await KEYS_ACTIONS.deleteKey(protocol, vpn_key, ip_server, date, CountDaysBuy, user_delete)
+                    await KEYS_ACTIONS.deleteKey(protocol, bot_key, ip_server, date, CountDaysBuy, user_delete)
 
                 send_text_ += '✅Удаление конфигов на серверах\n🔄Удаление из Базы Данных...'
                 await bot.edit_message_text(send_text_, message.chat.id, mes_del.message_id, parse_mode='HTML')
@@ -12495,32 +12495,32 @@ async def keys_get_call(call=None, message=None, call_data=None):
         
         user_id = int(call_data.split(':')[1])
         logger.debug(f'{user_id} - Зашел в функцию загрузки ключей')
-        vpn_key = call_data.split(':')[2]
+        bot_key = call_data.split(':')[2]
         yes = False
         user = await user_get(user_id)
 
         logger.debug(f'{user_id} - Получил данные из call_data={call_data}')
         if 'delete' in call_data:
-            logger.debug(f'{user_id} - Удаляю ключ {vpn_key}')
+            logger.debug(f'{user_id} - Удаляю ключ {bot_key}')
             await delete_message(user_send, message.message_id)
-            lines = await DB.get_qr_key_All(user_id) # VPN_Key, Date, User_id, isAdminKey, CountDaysBuy, ip_server, isActive 
+            lines = await DB.get_qr_key_All(user_id) # BOT_Key, Date, User_id, isAdminKey, CountDaysBuy, ip_server, isActive 
             for line in lines:
                 ip_server = line[5]
-                vpn_key1 = line[0]
+                bot_key1 = line[0]
                 protocol = line[7]
                 date_key = line[1]
                 CountDaysBuy = line[4]
 
-                if vpn_key == vpn_key1:
-                    await KEYS_ACTIONS.deleteKey(protocol, vpn_key, ip_server, date_key, CountDaysBuy, user_id)
+                if bot_key == bot_key1:
+                    await KEYS_ACTIONS.deleteKey(protocol, bot_key, ip_server, date_key, CountDaysBuy, user_id)
                     break
 
-            await DB.delete_qr_key(vpn_key)
-            await send_message(user_send, f'✅Ключ <code>{vpn_key}</code> пользователя <code>{user_id}</code> успешно удален!')
+            await DB.delete_qr_key(bot_key)
+            await send_message(user_send, f'✅Ключ <code>{bot_key}</code> пользователя <code>{user_id}</code> успешно удален!')
 
         if 'ch_pr' in call_data:
             if 'wireguard' in call_data or 'vless' in call_data or 'outline' in call_data or 'pptp' in call_data:
-                logger.debug(f'{user_id} - Изменяю протокол ключа {vpn_key}')
+                logger.debug(f'{user_id} - Изменяю протокол ключа {bot_key}')
                 await delete_message(user_id, message.message_id)
 
                 # удалить ключ на сервере и в БД
@@ -12532,12 +12532,12 @@ async def keys_get_call(call=None, message=None, call_data=None):
 
                 mes_del_ = await send_message(user_id, user.lang.get('tx_change_protocol_wait'))
 
-                lines = await DB.get_qr_key_All(user_id) # VPN_Key, Date, User_id, isAdminKey, CountDaysBuy, ip_server, isActive, protocol
+                lines = await DB.get_qr_key_All(user_id) # BOT_Key, Date, User_id, isAdminKey, CountDaysBuy, ip_server, isActive, protocol
                 user_isPayChangeProtocol = await DB.get_user_is_pay_change_protocol(user_id)
 
                 for line in lines:
                     ip_server = line[5]
-                    vpn_key1 = line[0]
+                    bot_key1 = line[0]
                     protocol = line[7]
                     date = line[1]
                     CountDaysBuy = line[4]
@@ -12568,12 +12568,12 @@ async def keys_get_call(call=None, message=None, call_data=None):
                                 summ = round(SUMM_CHANGE_PROTOCOL / KURS_RUB, 2)
                             return await send_message(user_id, user.lang.get('tx_no_change_protocol_days').format(but=user.lang.get('but_pay_change_protocol'), valuta=user.valuta, summ=summ), reply_markup=await fun_klav_pay_change_protocol(user))
 
-                    if vpn_key == vpn_key1:
-                        await KEYS_ACTIONS.deleteKey(protocol, vpn_key, ip_server, date, CountDaysBuy, user_id)
+                    if bot_key == bot_key1:
+                        await KEYS_ACTIONS.deleteKey(protocol, bot_key, ip_server, date, CountDaysBuy, user_id)
                         break
 
                 if ip_server and protocol and CountDaysBuy and date:
-                    await DB.delete_qr_key(vpn_key)
+                    await DB.delete_qr_key(bot_key)
                     await delete_message(user_id, mes_del_.message_id)
 
                     # создать новый ключ на этом же сервере в противоположном протоколе
@@ -12588,23 +12588,23 @@ async def keys_get_call(call=None, message=None, call_data=None):
                     await new_key(user_id, day=CountDaysBuy, help_message=True, protocol=protocol, date=date, ip_server=ip_server, Podpiska=Podpiska, summ_tarif=summ_tarif)
                 else:
                     await delete_message(user_id, mes_del_.message_id)
-                    await send_message(user_send, user.lang.get('tx_no_find_key').format(key=vpn_key))
+                    await send_message(user_send, user.lang.get('tx_no_find_key').format(key=bot_key))
                     logger.warning(f'{user_id} - Не найден ключ 3')
             else:
-                logger.debug(f'{user_id} - Зашел в меню выбора протокола ключа {vpn_key}')
+                logger.debug(f'{user_id} - Зашел в меню выбора протокола ключа {bot_key}')
                 await delete_message(user_id, message.message_id)
 
                 # отобразить выбор доступных протоколов
                 klava = InlineKeyboardMarkup()
-                protocol = await DB.get_Protocol_by_key_name(vpn_key)
+                protocol = await DB.get_Protocol_by_key_name(bot_key)
                 if PR_WIREGUARD and protocol != 'wireguard':
-                    klava.add(InlineKeyboardButton(text=user.lang.get('but_select_WG'), callback_data=f'keys:{user_id}:{vpn_key}:ch_pr:wireguard'))
+                    klava.add(InlineKeyboardButton(text=user.lang.get('but_select_WG'), callback_data=f'keys:{user_id}:{bot_key}:ch_pr:wireguard'))
                 if PR_VLESS and protocol != 'vless':
-                    klava.add(InlineKeyboardButton(text=user.lang.get('but_select_vless'), callback_data=f'keys:{user_id}:{vpn_key}:ch_pr:vless'))
+                    klava.add(InlineKeyboardButton(text=user.lang.get('but_select_vless'), callback_data=f'keys:{user_id}:{bot_key}:ch_pr:vless'))
                 if PR_OUTLINE and protocol != 'outline':
-                    klava.add(InlineKeyboardButton(text=user.lang.get('but_select_Outline'), callback_data=f'keys:{user_id}:{vpn_key}:ch_pr:outline'))
+                    klava.add(InlineKeyboardButton(text=user.lang.get('but_select_Outline'), callback_data=f'keys:{user_id}:{bot_key}:ch_pr:outline'))
                 if PR_PPTP and protocol != 'pptp':
-                    klava.add(InlineKeyboardButton(text=user.lang.get('but_select_pptp'), callback_data=f'keys:{user_id}:{vpn_key}:ch_pr:pptp'))
+                    klava.add(InlineKeyboardButton(text=user.lang.get('but_select_pptp'), callback_data=f'keys:{user_id}:{bot_key}:ch_pr:pptp'))
                 klava.add(InlineKeyboardButton(text=user.lang.get('but_main'), callback_data=f'buttons:but_main'))
 
                 tx_description_protocols = ''
@@ -12671,9 +12671,9 @@ async def keys_get_call(call=None, message=None, call_data=None):
                 select_server_index = -1
             isSelect = select_server_index != -1
             if isSelect:
-                logger.debug(f'{user_id} - Изменяю локацию ключа {vpn_key}')
+                logger.debug(f'{user_id} - Изменяю локацию ключа {bot_key}')
             else:
-                logger.debug(f'{user_id} - Зашел в меню выбора локации ключа {vpn_key}')
+                logger.debug(f'{user_id} - Зашел в меню выбора локации ключа {bot_key}')
             # отобразить выбор доступных локаций
             # Сервера группируются по названиям (соотвественно, если к примеру есть 2 сервера названые «🇩🇪Германия», то у клиента будет отображаться как выбор «🇩🇪Германия»)
             
@@ -12702,10 +12702,10 @@ async def keys_get_call(call=None, message=None, call_data=None):
 
                 # берем текущую локацию
                 old_location = ''
-                user_keys = await DB.get_user_keys(user_id) # qr.VPN_Key, qr.OS, qr.isAdminKey, qr.Date, qr.CountDaysBuy, qr.ip_server, qr.isActive, qr.Protocol, sr.Location
+                user_keys = await DB.get_user_keys(user_id) # qr.BOT_Key, qr.OS, qr.isAdminKey, qr.Date, qr.CountDaysBuy, qr.ip_server, qr.isActive, qr.Protocol, sr.Location
                 logger.debug(f'{user_id} - Ключи пользователя {user_keys}')
                 for user_key in user_keys:
-                    if user_key[0] == vpn_key:
+                    if user_key[0] == bot_key:
                         old_ip_server = user_key[5]
                         old_location = user_key[8]
                         break
@@ -12723,7 +12723,7 @@ async def keys_get_call(call=None, message=None, call_data=None):
                     isPremium = user.lang.get('tx_change_location_premium_smile') if location in premium_locations else ''
 
                     if servers_count_keys_for_locations[location]['current'] < servers_count_keys_for_locations[location]['max']:
-                        but_key = InlineKeyboardButton(text=f'{isPremium}{location}{text_ddd}', callback_data=f'keys:{user_id}:{vpn_key}:ch_loc:{index}')
+                        but_key = InlineKeyboardButton(text=f'{isPremium}{location}{text_ddd}', callback_data=f'keys:{user_id}:{bot_key}:ch_loc:{index}')
                     else:
                         but_key = InlineKeyboardButton(text=f"{isPremium}{location}{text_ddd} ({user.lang.get('tx_change_location_limit')})", callback_data=f':::')
                     klava.add(but_key)
@@ -12764,11 +12764,11 @@ async def keys_get_call(call=None, message=None, call_data=None):
                     old_ip_server = None
                     ip_server = None
                     select_location_is_old = False
-                    user_keys = await DB.get_user_keys(user_id) # qr.VPN_Key, qr.OS, qr.isAdminKey, qr.Date, qr.CountDaysBuy, qr.ip_server, qr.isActive, qr.Protocol, sr.Location
+                    user_keys = await DB.get_user_keys(user_id) # qr.BOT_Key, qr.OS, qr.isAdminKey, qr.Date, qr.CountDaysBuy, qr.ip_server, qr.isActive, qr.Protocol, sr.Location
                     
                     logger.debug(f'{user_id} - Ключи пользователя {user_keys}')
                     for user_key in user_keys:
-                        if user_key[0] == vpn_key:
+                        if user_key[0] == bot_key:
                             old_ip_server = user_key[5]
                             old_location = user_key[8]
                             # проверить, пользователь выбрал такую же локацию, как у него сейчас или другую
@@ -12814,50 +12814,50 @@ async def keys_get_call(call=None, message=None, call_data=None):
                         lines = await DB.get_qr_key_All(user_id)
                         for line in lines:
                             ip_server_ = line[5]
-                            vpn_key1 = line[0]
+                            bot_key1 = line[0]
                             protocol = line[7]
                             date = line[1]
                             CountDaysBuy = line[4]
                             Podpiska = line[12]
                             summ_tarif = line[14]
 
-                            if vpn_key == vpn_key1:
-                                await KEYS_ACTIONS.deleteKey(protocol, vpn_key, ip_server_, date, CountDaysBuy, user_id)
+                            if bot_key == bot_key1:
+                                await KEYS_ACTIONS.deleteKey(protocol, bot_key, ip_server_, date, CountDaysBuy, user_id)
                                 break
                         
                         if ip_server and protocol and CountDaysBuy and date:
-                            await DB.delete_qr_key(vpn_key)
+                            await DB.delete_qr_key(bot_key)
                             await delete_message(user_id, mes_del_.message_id)
                             await new_key(user_id, day=CountDaysBuy, help_message=True, protocol=protocol, date=date, ip_server=ip_server, isChangeLocation=True, Podpiska=Podpiska, summ_tarif=summ_tarif)
                         else:
                             await delete_message(user_id, mes_del_.message_id)
-                            await send_message(user_send, user.lang.get('tx_no_find_key').format(key=vpn_key))
+                            await send_message(user_send, user.lang.get('tx_no_find_key').format(key=bot_key))
                             logger.warning(f'{user_id} - Не найден ключ 1')
                     else:
-                        await send_message(user_send, user.lang.get('tx_no_find_key').format(key=vpn_key))
-                        logger.debug(f'{user_id} - Не найден ключ {vpn_key}')
+                        await send_message(user_send, user.lang.get('tx_no_find_key').format(key=bot_key))
+                        logger.debug(f'{user_id} - Не найден ключ {bot_key}')
                 user.locations = []
             return
 
         if 'change_summ' in call_data:
-            logger.debug(f'{user_id} - Изменяю сумму следующего списания {vpn_key}')
+            logger.debug(f'{user_id} - Изменяю сумму следующего списания {bot_key}')
             await delete_message(user_send, message.message_id)
             current_user = await user_get(user_send)
             current_user.bot_status = 15
-            current_user.keyForChange = vpn_key
-            summ = await DB.get_summ_next_pay(vpn_key)
-            await send_message(user_send, f'ℹ️Введите сумму следующего списания для ключа <code><b>{vpn_key}</b></code> пользователя <code><b>{user_id}</b></code>:\n\n💳Текущая сумма: <b>{summ}₽</b>')
+            current_user.keyForChange = bot_key
+            summ = await DB.get_summ_next_pay(bot_key)
+            await send_message(user_send, f'ℹ️Введите сумму следующего списания для ключа <code><b>{bot_key}</b></code> пользователя <code><b>{user_id}</b></code>:\n\n💳Текущая сумма: <b>{summ}₽</b>')
             return
 
         if 'change' in call_data:
-            logger.debug(f'{user_id} - Изменяю дни ключа {vpn_key}')
+            logger.debug(f'{user_id} - Изменяю дни ключа {bot_key}')
             await delete_message(user_send, message.message_id)
             current_user = await user_get(user_send)
             current_user.bot_status = 3
-            current_user.keyForChange = vpn_key
+            current_user.keyForChange = bot_key
             count_days_off = call_data.split(":")[3]
             count_days_izn = call_data.split(":")[4]
-            await send_message(user_send, f'Введите кол-во изначальных дней для ключа <code><b>{vpn_key}</b></code> пользователя <code><b>{user_id}</b></code>:\n\nОсталось дней: {count_days_off}\nИзначальной дней: {count_days_izn}')
+            await send_message(user_send, f'Введите кол-во изначальных дней для ключа <code><b>{bot_key}</b></code> пользователя <code><b>{user_id}</b></code>:\n\nОсталось дней: {count_days_off}\nИзначальной дней: {count_days_izn}')
             return
 
         if 'back' in call_data or 'delete' in call_data:
@@ -12870,13 +12870,13 @@ async def keys_get_call(call=None, message=None, call_data=None):
             return
 
         if 'oplacheno' in call_data:
-            logger.debug(f'{user_id} - Ключ {vpn_key} оплачен выдаем его')
+            logger.debug(f'{user_id} - Ключ {bot_key} оплачен выдаем его')
             await delete_message(user_send, message.message_id)
             if not await check_promo_is_activ(user.code, user_id):
                 nick_user = message.chat.username
                 await DB.set_activate_promo(user.code, nick_user if not nick_user is None else user_id, user_id, user.days_code)
-                await DB.add_day_qr_key_in_DB(user_id, user.days_code, vpn_key)
-                await add_days(user_id, vpn_key, day=user.days_code, promo=user.code)
+                await DB.add_day_qr_key_in_DB(user_id, user.days_code, bot_key)
+                await add_days(user_id, bot_key, day=user.days_code, promo=user.code)
                 await DB.addReportsData('CountBuy', 1)
             else:
                 await send_message(user_id, user.lang.get('tx_promo_is_activate'))
@@ -12885,29 +12885,29 @@ async def keys_get_call(call=None, message=None, call_data=None):
             return
 
         if 'prodlit' in call_data:
-            logger.debug(f'{user_id} - Ключ {vpn_key} продлеваем')
+            logger.debug(f'{user_id} - Ключ {bot_key} продлеваем')
             await delete_message(user_send, message.message_id)
             await send_message(user_id, user.lang.get('tx_prodlt_tarif'), reply_markup=user.klav_buy_days)
-            user.isProdleniye = vpn_key
+            user.isProdleniye = bot_key
             return
 
         mes_del = await send_message(user_send, user.lang.get('tx_key_load_wait'))
         logger.debug(f'{user_id} - Загружаю ключи пользователя {user_id}')
 
-        keys_data = await DB.get_user_keys(user_id) # VPN_Key, OS, isAdminKey, Date, CountDaysBuy, ip_server, isActive
+        keys_data = await DB.get_user_keys(user_id) # BOT_Key, OS, isAdminKey, Date, CountDaysBuy, ip_server, isActive
         text_keys_data = ''
         if len(keys_data) > 0:
             logger.debug(f'{user_id} - Нашел ключи пользователя {user_id}')
             for item in keys_data:
                 # isActive = bool(item[6])
                 # if isActive:
-                vpn_key_m = item[0]
+                bot_key_m = item[0]
                 protocol = item[7]
                 text_keys_data_key = item[9]
-                if vpn_key_m == vpn_key:
+                if bot_key_m == bot_key:
                     text_keys_data = text_keys_data_key
                     yes = True
-                    logger.debug(f'{user_id} - Ключ {vpn_key} активен, выдаем его')
+                    logger.debug(f'{user_id} - Ключ {bot_key} активен, выдаем его')
                     break
         logger.debug(f'{user_id} - Загрузил ключи пользователя {user_id}')
 
@@ -12919,23 +12919,23 @@ async def keys_get_call(call=None, message=None, call_data=None):
             except:
                 pass
             klava = InlineKeyboardMarkup()
-            but_key_download = InlineKeyboardButton(text=f'⏬Скачать конфиг', callback_data=f'keys:{user_id}:{vpn_key}:download')
+            but_key_download = InlineKeyboardButton(text=f'⏬Скачать конфиг', callback_data=f'keys:{user_id}:{bot_key}:download')
             count_days_off = call_data.split(":")[3]
             count_days_izn = call_data.split(":")[4]
-            but_key_change_day = InlineKeyboardButton(text=f'🔄Изменить кол-во дней', callback_data=f'keys:{user_id}:{vpn_key}:{count_days_off}:{count_days_izn}:change')
-            but_key_del = InlineKeyboardButton(text=f'🛑Удалить', callback_data=f'keys:{user_id}:{vpn_key}:delete')
-            but_key_back = InlineKeyboardButton(text=f'⏪Вернуться к пользователю', callback_data=f'keys:{user_id}:{vpn_key}:back')
+            but_key_change_day = InlineKeyboardButton(text=f'🔄Изменить кол-во дней', callback_data=f'keys:{user_id}:{bot_key}:{count_days_off}:{count_days_izn}:change')
+            but_key_del = InlineKeyboardButton(text=f'🛑Удалить', callback_data=f'keys:{user_id}:{bot_key}:delete')
+            but_key_back = InlineKeyboardButton(text=f'⏪Вернуться к пользователю', callback_data=f'keys:{user_id}:{bot_key}:back')
             klava.add(but_key_download)
             klava.add(but_key_change_day)
             if AUTO_PAY_YKASSA:
-                but = InlineKeyboardButton(text=f'💳Изменить сумму следующего списания', callback_data=f'keys:{user_id}:{vpn_key}:change_summ')
+                but = InlineKeyboardButton(text=f'💳Изменить сумму следующего списания', callback_data=f'keys:{user_id}:{bot_key}:change_summ')
                 klava.add(but)
             klava.add(but_key_del)
             klava.add(but_key_back)
-            return await send_message(user_send, f'Выберите действие с ключом <code><b>{vpn_key}</b></code> пользователя <code><b>{user_id}</b></code>:', reply_markup=klava)
+            return await send_message(user_send, f'Выберите действие с ключом <code><b>{bot_key}</b></code> пользователя <code><b>{user_id}</b></code>:', reply_markup=klava)
 
         if yes:
-            logger.debug(f'{user_id} - Ключ {vpn_key} проверка yes пройдена')
+            logger.debug(f'{user_id} - Ключ {bot_key} проверка yes пройдена')
             try:
                 await delete_message(user_send, message.message_id)
             except:
@@ -12943,19 +12943,19 @@ async def keys_get_call(call=None, message=None, call_data=None):
             server = None
             ip_server = None
             if text_keys_data == '':
-                ip_server = await DB.get_ip_server_by_key_name(vpn_key)
-                logger.debug(f'{user_id} - Ключ {vpn_key} ip сервера {ip_server}')
+                ip_server = await DB.get_ip_server_by_key_name(bot_key)
+                logger.debug(f'{user_id} - Ключ {bot_key} ip сервера {ip_server}')
 
                 if not ip_server is None and ip_server:
-                    logger.debug(f'{user_id} - Ключ {vpn_key} ищу сервер')
+                    logger.debug(f'{user_id} - Ключ {bot_key} ищу сервер')
                     for item in SERVERS:
                         if item['ip'] == ip_server:
-                            logger.debug(f'{user_id} - Ключ {vpn_key} сервер найден')
+                            logger.debug(f'{user_id} - Ключ {bot_key} сервер найден')
                             server = item
                             break
 
             if (ip_server and server) or text_keys_data != '':
-                logger.debug(f'{user_id} - Ключ {vpn_key} сервер найден, выдаю конфиг')
+                logger.debug(f'{user_id} - Ключ {bot_key} сервер найден, выдаю конфиг')
 
                 if server:
                     check_ = await check_server_is_work(server['ip'])
@@ -12969,68 +12969,68 @@ async def keys_get_call(call=None, message=None, call_data=None):
                         count_keys = len(count_keys)
                     else:
                         count_keys = 0
-                    conf_name_local = f'{NAME_VPN_CONFIG.lower()}_{random.randint(1,9)}{count_keys}{random.randint(1,9)}'
-                    path_to_conf_server = f'/home/{NO_ROOT_USER}/configs/{vpn_key}.conf'
+                    conf_name_local = f'{NAME_BOT_CONFIG.lower()}_{random.randint(1,9)}{count_keys}{random.randint(1,9)}'
+                    path_to_conf_server = f'/home/{NO_ROOT_USER}/configs/{bot_key}.conf'
                     path_to_conf_local = f"{conf_name_local[:15].lower()}.conf"
-                    logger.debug(f'{user_id} - Ключ {vpn_key} путь к конфигу {path_to_conf_server}')
+                    logger.debug(f'{user_id} - Ключ {bot_key} путь к конфигу {path_to_conf_server}')
 
                     if text_keys_data == '':
                         if check_:
-                            logger.debug(f'{user_id} - Ключ {vpn_key} скачиваю конфиг WireGuard')
+                            logger.debug(f'{user_id} - Ключ {bot_key} скачиваю конфиг WireGuard')
                             text = await exec_command_in_http_server(ip=server['ip'], password=server['password'], path=path_to_conf_server)
-                            logger.debug(f'{user_id} - Ключ {vpn_key} конфиг скачан WireGuard text = {text}')
+                            logger.debug(f'{user_id} - Ключ {bot_key} конфиг скачан WireGuard text = {text}')
                         else:
-                            logger.debug(f'{user_id} - Ключ {vpn_key} конфиг WireGuard не скачан, сервер не отвечает')
+                            logger.debug(f'{user_id} - Ключ {bot_key} конфиг WireGuard не скачан, сервер не отвечает')
                             text = None
                     else:
-                        logger.debug(f'{user_id} - Ключ {vpn_key} конфиг WireGuard загружен из БД')
+                        logger.debug(f'{user_id} - Ключ {bot_key} конфиг WireGuard загружен из БД')
                         text = text_keys_data
                 elif protocol == 'outline':
                     if text_keys_data == '':
                         if check_:
-                            logger.debug(f'{user_id} - Ключ {vpn_key} скачиваю конфиг Outline')
-                            cl = OutlineVPN(server['api_url'], server['cert_sha256'])
-                            logger.debug(f'{user_id} - Ключ {vpn_key} конфиг скачан Outline')
+                            logger.debug(f'{user_id} - Ключ {bot_key} скачиваю конфиг Outline')
+                            cl = OutlineBOT(server['api_url'], server['cert_sha256'])
+                            logger.debug(f'{user_id} - Ключ {bot_key} конфиг скачан Outline')
                             text = None
                             for key in cl.get_keys():
-                                if key.name == vpn_key:
-                                    logger.debug(f'{user_id} - Ключ {vpn_key} конфиг скачан Outline, нашел нужный ключ')
-                                    text = f"{key.access_url}#{server['location']} - {NAME_VPN_CONFIG}"
+                                if key.name == bot_key:
+                                    logger.debug(f'{user_id} - Ключ {bot_key} конфиг скачан Outline, нашел нужный ключ')
+                                    text = f"{key.access_url}#{server['location']} - {NAME_BOT_CONFIG}"
                                     break
                         else:
-                            logger.debug(f'{user_id} - Ключ {vpn_key} конфиг Outline не скачан, сервер не отвечает')
+                            logger.debug(f'{user_id} - Ключ {bot_key} конфиг Outline не скачан, сервер не отвечает')
                             text = None
                     else:
-                        logger.debug(f'{user_id} - Ключ {vpn_key} конфиг Outline загружен из БД')
+                        logger.debug(f'{user_id} - Ключ {bot_key} конфиг Outline загружен из БД')
                         text = text_keys_data
                 elif protocol == 'vless':
                     if text_keys_data == '':
                         if check_:
-                            logger.debug(f'{user_id} - Ключ {vpn_key} скачиваю конфиг VLESS')
+                            logger.debug(f'{user_id} - Ключ {bot_key} скачиваю конфиг VLESS')
                             cl = VLESS(server['ip'], server['password'])
-                            logger.debug(f'{user_id} - Ключ {vpn_key} конфиг скачан VLESS')
+                            logger.debug(f'{user_id} - Ключ {bot_key} конфиг скачан VLESS')
                             text = None
                             for key in cl.activ_list():
-                                if key[0] == vpn_key:
-                                    logger.debug(f'{user_id} - Ключ {vpn_key} конфиг скачан VLESS, нашел нужный ключ')
+                                if key[0] == bot_key:
+                                    logger.debug(f'{user_id} - Ключ {bot_key} конфиг скачан VLESS, нашел нужный ключ')
                                     text = key[2]
                                     break
                         else:
-                            logger.debug(f'{user_id} - Ключ {vpn_key} конфиг VLESS не скачан, сервер не отвечает')
+                            logger.debug(f'{user_id} - Ключ {bot_key} конфиг VLESS не скачан, сервер не отвечает')
                             text = None
                     else:
-                        logger.debug(f'{user_id} - Ключ {vpn_key} конфиг VLESS загружен из БД')
+                        logger.debug(f'{user_id} - Ключ {bot_key} конфиг VLESS загружен из БД')
                         text = text_keys_data
                 elif protocol == 'pptp':
                     if text_keys_data == '':
-                        logger.debug(f'{user_id} - Ключ {vpn_key} конфиг PPTP не скачан, и нет возможности его загрузить')
+                        logger.debug(f'{user_id} - Ключ {bot_key} конфиг PPTP не скачан, и нет возможности его загрузить')
                         text = None
                     else:
-                        logger.debug(f'{user_id} - Ключ {vpn_key} конфиг PPTP загружен из БД')
+                        logger.debug(f'{user_id} - Ключ {bot_key} конфиг PPTP загружен из БД')
                         text = text_keys_data
 
                 if not text:
-                    logger.warning(f'{user_id} - Ключ {vpn_key} конфиг не скачан')
+                    logger.warning(f'{user_id} - Ключ {bot_key} конфиг не скачан')
                     await send_message(user_send, user.lang.get('tx_key_load_no_success'))
                     try:
                         await delete_message(user_send, mes_del.message_id)
@@ -13039,29 +13039,29 @@ async def keys_get_call(call=None, message=None, call_data=None):
                     return
 
                 if text_keys_data == '':
-                    await DB.set_keys_data_for_key(vpn_key, text)
+                    await DB.set_keys_data_for_key(bot_key, text)
 
                 if protocol == 'wireguard':
-                    logger.debug(f'{user_id} - Ключ {vpn_key} генерирую QR код')
+                    logger.debug(f'{user_id} - Ключ {bot_key} генерирую QR код')
                     if SEND_QR:
                         path_to_save = f'{conf_name_local[:15]}.png'
-                        logger.debug(f'{user_id} - Ключ {vpn_key} конфиг скачан, генерирую QR код, путь к сохранению {path_to_save}')
+                        logger.debug(f'{user_id} - Ключ {bot_key} конфиг скачан, генерирую QR код, путь к сохранению {path_to_save}')
 
                         result_qr = False
                         try:
                             result_qr = await gen_qr_code(text, QR_LOGO, path_to_save)
                             if result_qr:
-                                logger.debug(f'{user_id} - Ключ {vpn_key} конфиг скачан, QR код сгенерирован, отправляю')
+                                logger.debug(f'{user_id} - Ключ {bot_key} конфиг скачан, QR код сгенерирован, отправляю')
                                 await bot.send_photo(user_send, open(path_to_save, 'rb'))
-                                logger.debug(f'{user_id} - Ключ {vpn_key} конфиг скачан, QR код отправлен')
+                                logger.debug(f'{user_id} - Ключ {bot_key} конфиг скачан, QR код отправлен')
                             else:
-                                logger.warning(f'{user_id} - Ключ {vpn_key} конфиг скачан, создание QR не удалось произвести так как не был обнаружен верный LOGO.png result_qr={result_qr}')
+                                logger.warning(f'{user_id} - Ключ {bot_key} конфиг скачан, создание QR не удалось произвести так как не был обнаружен верный LOGO.png result_qr={result_qr}')
                         except Exception as e:
-                            logger.warning(f'{user_id} - Ключ {vpn_key} конфиг скачан, создание QR не удалось произвести так как не был обнаружен верный LOGO.png result_qr={result_qr}\nОшибка: {e}')
+                            logger.warning(f'{user_id} - Ключ {bot_key} конфиг скачан, создание QR не удалось произвести так как не был обнаружен верный LOGO.png result_qr={result_qr}\nОшибка: {e}')
                     with open(path_to_conf_local, "w") as f:
                         f.write(text)
                     await bot.send_document(user_send, open(path_to_conf_local, "rb"))
-                    logger.debug(f'{user_id} - Ключ {vpn_key} конфиг скачан, конфиг отправлен')
+                    logger.debug(f'{user_id} - Ключ {bot_key} конфиг скачан, конфиг отправлен')
                 elif protocol == 'outline':
                     await send_message(user_send, f'<code>{text}</code>')
                     logger.debug(f'{user_id} - Ключ Outline text.access_url = {text}')
@@ -13081,25 +13081,25 @@ async def keys_get_call(call=None, message=None, call_data=None):
                 if protocol != 'pptp':
                     user.key_url = text
                     await send_message(user_send, user.lang.get('tx_key_select_for_help'), reply_markup=await fun_klav_podkl_no_back(user, user.buttons_podkl_vless))
-                    logger.debug(f'{user_id} - Ключ {vpn_key} конфиг скачан, отправил сообщение с кнопками подключения')
+                    logger.debug(f'{user_id} - Ключ {bot_key} конфиг скачан, отправил сообщение с кнопками подключения')
 
                 if protocol == 'wireguard':
                     try:
-                        logger.debug(f'{user_id} - Ключ {vpn_key} конфиг скачан, удаляю конфиги')
+                        logger.debug(f'{user_id} - Ключ {bot_key} конфиг скачан, удаляю конфиги')
                         os.remove(path_to_conf_local)
                         if SEND_QR:
                             os.remove(path_to_save)
-                        logger.debug(f'{user_id} - Ключ {vpn_key} конфиг скачан, конфиги удалены')
+                        logger.debug(f'{user_id} - Ключ {bot_key} конфиг скачан, конфиги удалены')
                     except:
                         pass
             else:
                 if call:
                     await bot.answer_callback_query(callback_query_id=call.id, text=user.lang.get('tx_key_no_search'))
-                logger.warning(f'{user_id} - Ключ {vpn_key} конфиг не скачан, сервер не найден')
+                logger.warning(f'{user_id} - Ключ {bot_key} конфиг не скачан, сервер не найден')
         else:
             if call:
                 await bot.answer_callback_query(callback_query_id=call.id, text=user.lang.get('tx_key_no_search'))
-            logger.warning(f'{user_id} - Ключ {vpn_key} конфиг не скачан, ключ не найден')
+            logger.warning(f'{user_id} - Ключ {bot_key} конфиг не скачан, ключ не найден')
 
         try: await delete_message(user_send, mes_del.message_id)
         except: pass
@@ -13697,10 +13697,10 @@ async def pokupka(user):
         elif user.isPayChangeLocations:
             head_text = '🔄Вызвал оплату смены локаций (1 мес.)'
         else:
-            if user.bill_vpn_key != '':
-                user.Protocol = await DB.get_Protocol_by_key_name(user.bill_vpn_key)
+            if user.bill_bot_key != '':
+                user.Protocol = await DB.get_Protocol_by_key_name(user.bill_bot_key)
                 head_text = 'Вызвал продление ключа'
-                text_add = f', <code>{user.bill_vpn_key}</code>'
+                text_add = f', <code>{user.bill_bot_key}</code>'
             else:
                 head_text = '🔄Вызвал оплату ключа'
                 text_add = ''
@@ -13899,20 +13899,20 @@ async def reply_admin_message(message):
     except:
         await Print_Error()
 
-async def change_days_vless(vpn_key, days):
+async def change_days_vless(bot_key, days):
     try:
         # изменить кол-во дней в панели 3X-UI, если protocol='vless'
-        ip_server = await DB.get_ip_server_by_key_name(vpn_key)
-        protocol = await DB.get_Protocol_by_key_name(vpn_key)
+        ip_server = await DB.get_ip_server_by_key_name(bot_key)
+        protocol = await DB.get_Protocol_by_key_name(bot_key)
         if protocol == 'vless':
             for server in SERVERS:
                 if server['ip'] == ip_server:
                     if check_server_is_marzban(server['ip']):
                         marzban = MARZBAN(server['ip'], server['password'])
-                        await marzban.update_status_key(key=vpn_key, status=True)
+                        await marzban.update_status_key(key=bot_key, status=True)
                     else:
                         vless = VLESS(server['ip'], server['password'])
-                        await vless.addOrUpdateKey(vpn_key, isUpdate=True, isActiv=True, days=days)
+                        await vless.addOrUpdateKey(bot_key, isUpdate=True, isActiv=True, days=days)
                     break
     except:
         await Print_Error()
@@ -13995,11 +13995,11 @@ async def message_input(message, alt_text=''):
 
                     user.bot_status = 0
 
-                    keys_data = await DB.get_user_keys(user_id_rep) # VPN_Key, OS, isAdminKey, Date, CountDaysBuy, ip_server, isActive
+                    keys_data = await DB.get_user_keys(user_id_rep) # BOT_Key, OS, isAdminKey, Date, CountDaysBuy, ip_server, isActive
                     if len(keys_data) > 0:
                         keys_yes = False
                         for key in keys_data:
-                            vpn_key = key[0]
+                            bot_key = key[0]
                             isActive = bool(key[6])
                             izn_count_days = int(key[4])
                             protocol = key[7]
@@ -14017,7 +14017,7 @@ async def message_input(message, alt_text=''):
                             date_end = date_start + timedelta(days=CountDaysBuy)
                             count_days_to_off = (date_end - date_now).days + 1
 
-                            but_key = InlineKeyboardButton(text=f'🔑{vpn_key} ({count_days_to_off}/{izn_count_days} {await dney(izn_count_days)}) ({protocol})', callback_data=f'keys:{user_id_rep}:{vpn_key}:{count_days_to_off}:{izn_count_days}')
+                            but_key = InlineKeyboardButton(text=f'🔑{bot_key} ({count_days_to_off}/{izn_count_days} {await dney(izn_count_days)}) ({protocol})', callback_data=f'keys:{user_id_rep}:{bot_key}:{count_days_to_off}:{izn_count_days}')
                             klava_buy.add(but_key)
                             keys_yes = True
                             
@@ -14076,11 +14076,11 @@ async def message_input(message, alt_text=''):
 
             if user.last_select_user_index != 0 and user.keyForChange != '':
                 if 1 <= days <= 1000:
-                    vpn_key = user.keyForChange
-                    await DB.set_day_qr_key_in_DB(vpn_key, days)
+                    bot_key = user.keyForChange
+                    await DB.set_day_qr_key_in_DB(bot_key, days)
 
                     # изменить кол-во дней в панели 3X-UI, если protocol='vless'
-                    await change_days_vless(vpn_key, days)
+                    await change_days_vless(bot_key, days)
 
                     await send_message(message.chat.id, f'✅Кол-во изначальных дней ключа {user.keyForChange} успешно изменено на {days} {await dney(days)}!')
                     user.bot_status = 1
@@ -14431,8 +14431,8 @@ async def message_input(message, alt_text=''):
 
             if user.last_select_user_index != 0 and user.keyForChange != '':
                 if 1 <= summ <= 1000:
-                    vpn_key = user.keyForChange
-                    await DB.set_summ_qr_key_in_DB(vpn_key, summ)
+                    bot_key = user.keyForChange
+                    await DB.set_summ_qr_key_in_DB(bot_key, summ)
 
                     await send_message(message.chat.id, f'✅Сумма следующего списания у ключа <b>{user.keyForChange}</b> успешно изменено на <b>{summ}₽</b>')
                     user.bot_status = 1
@@ -14863,8 +14863,8 @@ async def message_input(message, alt_text=''):
         elif m_text == user.lang.get('but_how_podkl_pptp'):
             await send_message(user_id, user.lang.get('instr_pptp').format(my_keys=user.lang.get('but_my_keys')), reply_markup=await fun_klav_how_install(user, HELP_VLESS, HELP_WIREGUARD, HELP_OUTLINE, HELP_PPTP))
 
-        elif m_text == user.lang.get('but_no_work_vpn'):
-            await send_message(user_id, user.lang.get('tx_not_work_vpn').format(name=message.chat.first_name, nick_help=NICK_HELP), reply_markup=await fun_klav_help(user))
+        elif m_text == user.lang.get('but_no_work_bot'):
+            await send_message(user_id, user.lang.get('tx_not_work_bot').format(name=message.chat.first_name, nick_help=NICK_HELP), reply_markup=await fun_klav_help(user))
 
         elif m_text == user.lang.get('but_manager'):
             await send_message(user_id, user.lang.get('tx_manager').format(nick_help=NICK_HELP), reply_markup=await fun_klav_help(user))
@@ -14896,10 +14896,10 @@ async def message_input(message, alt_text=''):
                             await DB.update_qr_keys_add_1_day(message.chat.id)
                             await send_message(message.chat.id, user.lang.get('tx_obesh_select'))
 
-                            for vpn_key in data:
-                                conf_name = vpn_key[0]
-                                ip_server = vpn_key[5]
-                                protocol = vpn_key[7]
+                            for bot_key in data:
+                                conf_name = bot_key[0]
+                                ip_server = bot_key[5]
+                                protocol = bot_key[7]
                                 await KEYS_ACTIONS.activateKey(protocol, conf_name, ip_server, message.chat.id, days=2)
 
                             if not IS_OTCHET:
@@ -14961,7 +14961,7 @@ async def message_input(message, alt_text=''):
 
                 if user.isProdleniye:
                     # Если продление
-                    user.bill_vpn_key = f'{user.isProdleniye}'
+                    user.bill_bot_key = f'{user.isProdleniye}'
                     user.isPayChangeProtocol = False
                     user.isPayChangeLocations = False
                     # Проверить кол-во активных WALLETS
@@ -15026,7 +15026,7 @@ async def message_input(message, alt_text=''):
                     message_del = await send_message(user_id, text_send, reply_markup=klava)
                     user.message_del_id = message_del.message_id
             elif user.bot_status == 21:
-                user.bill_vpn_key = ''
+                user.bill_bot_key = ''
                 user.isPayChangeProtocol = False
                 user.isPayChangeLocations = False
                 if len([item for item in WALLETS if item['isActive']]) > 1:
@@ -15150,7 +15150,7 @@ async def message_input(message, alt_text=''):
         elif m_text == user.lang.get('but_why'):
             await send_message(user_id, user.lang.get('tx_why'), reply_markup=await fun_klav_desription(user, user.lang.get('but_instagram')))
 
-        elif user.lang.get('but_desription').format(name_config=NAME_VPN_CONFIG) == message.text:
+        elif user.lang.get('but_desription').format(name_config=NAME_BOT_CONFIG) == message.text:
             photos = []
             try: photos.append(InputMediaPhoto(open(SCREEN_DOWNLOAD, 'rb')))
             except: pass
@@ -15631,7 +15631,7 @@ async def message_input(message, alt_text=''):
             #     await send_message(user_id, user.lang.get('tx_partner_pay_out_no').format(text=user.lang.get('tx_partner_pay_out').format(summ=SUMM_VIVOD), summ=summ_zarabotal_partner), reply_markup=await fun_klav_zaprosi(user))
 
         elif m_text == user.lang.get('but_pay_change_protocol'):
-            user.bill_vpn_key = ''
+            user.bill_bot_key = ''
             user.isPayChangeProtocol = True
             user.isPayChangeLocations = False
             if len([item for item in WALLETS if item['isActive']]) > 1:
@@ -15639,7 +15639,7 @@ async def message_input(message, alt_text=''):
             await pokupka(user)
 
         elif m_text == user.lang.get('but_pay_change_locations'):
-            user.bill_vpn_key = ''
+            user.bill_bot_key = ''
             user.isPayChangeProtocol = False
             user.isPayChangeLocations = True
             if len([item for item in WALLETS if item['isActive']]) > 1:
@@ -15719,7 +15719,7 @@ async def message_input(message, alt_text=''):
                         user.code = code
                         user.days_code = CountDays
 
-                        res = await DB.get_qr_key_All(user_id) #VPN_Key, Date, User_id, isAdminKey, CountDaysBuy, ip_server, isActive
+                        res = await DB.get_qr_key_All(user_id) #BOT_Key, Date, User_id, isAdminKey, CountDaysBuy, ip_server, isActive
                         if res and len(res) > 0:
                             # Есть ключи
                             send_inline_button = False
@@ -15754,7 +15754,7 @@ async def message_input(message, alt_text=''):
                             user.code = code
                             user.days_code = days
                             
-                            res = await DB.get_qr_key_All(user_id) #VPN_Key, Date, User_id, isAdminKey, CountDaysBuy, ip_server, isActive
+                            res = await DB.get_qr_key_All(user_id) #BOT_Key, Date, User_id, isAdminKey, CountDaysBuy, ip_server, isActive
                             if res and len(res) > 0:
                                 # Есть ключи
                                 send_inline_button = False
@@ -15812,8 +15812,8 @@ def restartBot():
 
 async def start_bot():
     try:
-        if not all([x.isalpha() or x.isdigit() for x in NAME_VPN_CONFIG]):
-            await send_admins(None, '🛑🛑🛑Не верно указано имя для конфигураций конфига (/get_config -> NAME_VPN_CONFIG)🛑🛑🛑')
+        if not all([x.isalpha() or x.isdigit() for x in NAME_BOT_CONFIG]):
+            await send_admins(None, '🛑🛑🛑Не верно указано имя для конфигураций конфига (/get_config -> NAME_BOT_CONFIG)🛑🛑🛑')
 
         tasks = []
         await dp.skip_updates()
