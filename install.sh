@@ -344,6 +344,9 @@ setup_bot() {
 create_env() {
     log "Создание файла конфигурации..."
 
+    # Создаём директорию если нет
+    mkdir -p $INSTALL_DIR
+
     # Генерируем временный токен если нет (пользователь заменит на свой)
     TEMP_TOKEN="TEMP_$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)"
     
