@@ -1,0 +1,42 @@
+[Unit]
+Description=VPN Bot Service
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/vpn-bot
+ExecStart=/usr/local/bin/python3.11 /root/vpn-bot/bot.py
+Restart=always
+RestartSec=10
+RestartPreventExitStatus=1
+
+# Переменные окружения
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONIOENCODING=utf-8
+
+# Логирование
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=vpn-bot
+
+# Лимиты ресурсов
+LimitNOFILE=65535
+LimitNPROC=4096
+Nice=-5
+IOSchedulingClass=realtime
+IOSchedulingPriority=0
+
+# Безопасность
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/root/vpn-bot/data /root/vpn-bot/logs
+
+# Memory limits
+MemoryLimit=1G
+MemoryHigh=800M
+
+[Install]
+WantedBy=multi-user.target

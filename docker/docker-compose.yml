@@ -1,0 +1,109 @@
+version: '3.8'
+
+# =============================================================================
+# VPN Bot - Docker Compose Configuration
+# =============================================================================
+
+services:
+  # =============================================================================
+  # Telegram Bot
+  # =============================================================================
+  bot:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: vpn-bot
+    restart: unless-stopped
+    
+    # Переменные окружения
+    env_file:
+      - ../.env
+    
+    # Тома для сохранения данных
+    volumes:
+      - bot_data:/app/data
+      - bot_logs:/app/logs
+      - /etc/localtime:/etc/localtime:ro
+    
+    # Сеть
+    network_mode: host
+    
+    # Ресурсы
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+    
+    # Логи
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    
+    # Зависимости
+    depends_on:
+      - xui-db
+  
+  # =============================================================================
+  # 3X-UI Database (для сохранения конфигурации)
+  # =============================================================================
+  xui-db:
+    image: sqlite:latest
+    container_name: xui-db
+    restart: unless-stopped
+    
+    volumes:
+      - xui_data:/data
+    
+    # Сеть
+    networks:
+      - vpn-network
+
+  # =============================================================================
+  # Watchtower (автообновление контейнеров)
+  # =============================================================================
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: watchtower
+    restart: unless-stopped
+    
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    
+    # Проверка обновлений каждые 24 часа
+    command: --cleanup --interval 86400
+    
+    # Сеть
+    networks:
+      - vpn-network
+    
+    # Профили (запускается отдельно)
+    profiles:
+      - tools
+
+# =============================================================================
+# Тома
+# =============================================================================
+volumes:
+  bot_data:
+    driver: local
+    name: vpn-bot-data
+  
+  bot_logs:
+    driver: local
+    name: vpn-bot-logs
+  
+  xui_data:
+    driver: local
+    name: xui-data
+
+# =============================================================================
+# Сети
+# =============================================================================
+networks:
+  vpn-network:
+    driver: bridge
+    name: vpn-network
