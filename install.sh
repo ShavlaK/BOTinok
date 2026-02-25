@@ -14,7 +14,7 @@ set -e
 # Конфигурация
 # =============================================================================
 VERSION="1.0.0"
-PROJECT_NAME="vpn-bot"
+PROJECT_NAME="BOTinok"
 INSTALL_DIR="/root/$PROJECT_NAME"
 BOT_SERVICE_NAME="bot"
 XUI_VERSION="v2.3.5"
@@ -53,7 +53,7 @@ show_banner() {
     echo "║           🚀 VPN Bot - Автоматическая установка       ║"
     echo "║                                                       ║"
     echo "║  Версия: $VERSION                                     ║"
-    echo "║  GitHub: https://github.com/YOUR_USERNAME/vpn-bot     ║"
+    echo "║  GitHub: https://github.com/ShavlaK/BOTinok     ║"
     echo "║                                                       ║"
     echo "╚═══════════════════════════════════════════════════════╝"
     echo -e "${NC}"
@@ -269,14 +269,14 @@ setup_bot() {
         log "Загрузка файлов бота из GitHub..."
         cd $INSTALL_DIR
         
-        curl -Ls https://raw.githubusercontent.com/YOUR_USERNAME/vpn-bot/main/bot/bot.py -o bot.py
-        curl -Ls https://raw.githubusercontent.com/YOUR_USERNAME/vpn-bot/main/bot/requirements.txt -o requirements.txt
+        curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/bot.py -o bot.py
+        curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/requirements.txt -o requirements.txt
         
         mkdir -p data
-        curl -Ls https://raw.githubusercontent.com/YOUR_USERNAME/vpn-bot/main/bot/data/config.py -o data/config.py
-        curl -Ls https://raw.githubusercontent.com/YOUR_USERNAME/vpn-bot/main/bot/data/lang.yml -o data/lang.yml
-        curl -Ls https://raw.githubusercontent.com/YOUR_USERNAME/vpn-bot/main/bot/data/markup.py -o data/markup.py
-        curl -Ls https://raw.githubusercontent.com/YOUR_USERNAME/vpn-bot/main/bot/data/markup_inline.py -o data/markup_inline.py
+        curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/data/config.py -o data/config.py
+        curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/data/lang.yml -o data/lang.yml
+        curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/data/markup.py -o data/markup.py
+        curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/data/markup_inline.py -o data/markup_inline.py
     fi
     
     # Устанавливаем зависимости Python
@@ -375,7 +375,7 @@ Environment=PYTHONUNBUFFERED=1
 # Логирование
 StandardOutput=journal
 StandardError=journal
-SyslogIdentifier=vpn-bot
+SyslogIdentifier=BOTinok
 
 # Лимиты
 LimitNOFILE=65535
@@ -432,10 +432,10 @@ DATE=$(date +%Y%m%d_%H%M%S)
 mkdir -p $BACKUP_DIR
 
 # Бэкап базы данных
-cp /root/vpn-bot/data/*.db $BACKUP_DIR/db_backup_$DATE.tar.gz 2>/dev/null || true
+cp /root/BOTinok/data/*.db $BACKUP_DIR/db_backup_$DATE.tar.gz 2>/dev/null || true
 
 # Бэкап конфигов
-tar -czf $BACKUP_DIR/config_backup_$DATE.tar.gz /root/vpn-bot/.env /root/vpn-bot/data/config.py
+tar -czf $BACKUP_DIR/config_backup_$DATE.tar.gz /root/BOTinok/.env /root/BOTinok/data/config.py
 
 # Удаляем старые бэкапы (старше 7 дней)
 find $BACKUP_DIR -name "*.tar.gz" -mtime +7 -delete
@@ -501,7 +501,7 @@ print_summary() {
         echo ""
     fi
     
-    echo "📚 Документация: https://github.com/YOUR_USERNAME/vpn-bot"
+    echo "📚 Документация: https://github.com/ShavlaK/BOTinok"
     echo ""
 }
 

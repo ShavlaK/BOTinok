@@ -1,6 +1,6 @@
-# 🚀 VPN Bot - Автоматическое развёртывание
+# 🚀 BOTinok - Автоматическое развёртывание
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/YOUR_USERNAME/vpn-bot)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/ShavlaK/BOTinok)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.11-yellow.svg)](https://www.python.org/)
 [![Telegram](https://img.shields.io/badge/Telegram-Bot-blue.svg)](https://t.me/your_bot)
@@ -69,20 +69,20 @@
 ### 1. Основная версия (2GB+ RAM)
 
 ```bash
-bash <(curl -Ls https://raw.githubusercontent.com/YOUR_USERNAME/vpn-bot/main/install.sh)
+bash <(curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/install.sh)
 ```
 
 ### 2. Lite версия (512MB-1GB RAM)
 
 ```bash
-bash <(curl -Ls https://raw.githubusercontent.com/YOUR_USERNAME/vpn-bot/main/install-lite.sh)
+bash <(curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/install-lite.sh)
 ```
 
 ### 3. Docker версия
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/vpn-bot.git
-cd vpn-bot/docker
+git clone https://github.com/ShavlaK/BOTinok.git
+cd BOTinok/docker
 docker-compose up -d
 ```
 
@@ -109,7 +109,7 @@ cd /root
 
 ```bash
 # Скачайте установочный скрипт
-wget https://raw.githubusercontent.com/YOUR_USERNAME/vpn-bot/main/install.sh
+wget https://raw.githubusercontent.com/ShavlaK/BOTinok/main/install.sh
 
 # Сделайте его исполняемым
 chmod +x install.sh
@@ -143,7 +143,7 @@ chmod +x install.sh
 1. **Откройте файл конфигурации:**
 
 ```bash
-nano /root/vpn-bot/.env
+nano /root/BOTinok/.env
 ```
 
 2. **Укажите обязательные параметры:**
@@ -293,7 +293,7 @@ journalctl -u bot --since "2024-01-01 00:00:00" --until "2024-01-01 23:59:59"
 ### Структура проекта
 
 ```
-vpn-bot/
+BOTinok/
 ├── install.sh              # Основной установщик
 ├── install-lite.sh         # Lite версия
 ├── scripts/
@@ -326,7 +326,7 @@ vpn-bot/
 
 ```bash
 # Перейдите в директорию бота
-cd /root/vpn-bot
+cd /root/BOTinok
 
 # Скачайте обновления
 git pull
@@ -339,7 +339,7 @@ systemctl restart bot
 
 ```bash
 # Скачайте новую версию
-wget https://raw.githubusercontent.com/YOUR_USERNAME/vpn-bot/main/install.sh
+wget https://raw.githubusercontent.com/ShavlaK/BOTinok/main/install.sh
 
 # Запустите установку (обновит существующую)
 bash install.sh
@@ -360,7 +360,7 @@ systemctl disable bot
 rm /etc/systemd/system/bot.service
 
 # Удалите файлы бота
-rm -rf /root/vpn-bot
+rm -rf /root/BOTinok
 
 # Перезагрузите systemd
 systemctl daemon-reload
@@ -390,7 +390,7 @@ sed -i '/\/swapfile/d' /etc/fstab
 
 - **Telegram:** `@your_support_nick`
 - **Email:** support@example.com
-- **GitHub Issues:** https://github.com/YOUR_USERNAME/vpn-bot/issues
+- **GitHub Issues:** https://github.com/ShavlaK/BOTinok/issues
 
 ### Частые проблемы
 
@@ -401,7 +401,7 @@ sed -i '/\/swapfile/d' /etc/fstab
 journalctl -u bot -f
 
 # Проверьте .env файл
-nano /root/vpn-bot/.env
+nano /root/BOTinok/.env
 
 # Убедитесь что токен правильный
 # Проверьте в @BotFather
@@ -417,7 +417,7 @@ free -h
 ./scripts/setup_swap.sh
 
 # Или используйте Lite версию
-bash <(curl -Ls https://raw.githubusercontent.com/YOUR_USERNAME/vpn-bot/main/install-lite.sh)
+bash <(curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/install-lite.sh)
 ```
 
 #### Не работает оплата
@@ -445,7 +445,7 @@ df -h
 iftop
 
 # Логи бота
-tail -f /root/vpn-bot/logs/bot_*.log
+tail -f /root/BOTinok/logs/bot_*.log
 ```
 
 ### Статистика бота
@@ -474,7 +474,7 @@ MIT License - см. файл [LICENSE](LICENSE)
 
 ## 📞 Контакты
 
-**Разработчик:** YOUR_USERNAME  
+**Разработчик:** ShavlaK  
 **Telegram:** @your_support_nick  
 **Email:** support@example.com
 

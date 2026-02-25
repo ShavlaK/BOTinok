@@ -5,7 +5,7 @@
 ### 📁 Структура проекта
 
 ```
-vpn-bot-project/
+BOTinok-project/
 ├── 📄 README.md                  # Главная документация
 ├── 📄 LICENSE                    # MIT License
 ├── 📄 .gitignore                 # Игнорируемые файлы
@@ -45,7 +45,7 @@ vpn-bot-project/
 
 ```bash
 # Перейдите в директорию проекта
-cd /Users/shavlak/Desktop/vpn_bot/vpn-bot-project
+cd /Users/shavlak/Desktop/vpn_bot/BOTinok-project
 
 # Инициализируйте Git
 git init
@@ -54,10 +54,10 @@ git init
 git add .
 
 # Сделайте коммит
-git commit -m "Initial commit: VPN Bot v1.0"
+git commit -m "Initial commit: BOTinok v1.0"
 
-# Добавьте удалённый репозиторий (замените YOUR_USERNAME)
-git remote add origin https://github.com/YOUR_USERNAME/vpn-bot.git
+# Добавьте удалённый репозиторий (замените ShavlaK)
+git remote add origin https://github.com/ShavlaK/BOTinok.git
 
 # Отправьте на GitHub
 git push -u origin main
@@ -65,23 +65,23 @@ git push -u origin main
 
 ### 2. Обновите файлы
 
-Замените `YOUR_USERNAME` на ваш ник GitHub:
+Замените `ShavlaK` на ваш ник GitHub:
 
 ```bash
 # В директории проекта
-sed -i 's/YOUR_USERNAME/ваш_ник/g' README.md install.sh install-lite.sh docker/Dockerfile
+sed -i 's/ShavlaK/ваш_ник/g' README.md install.sh install-lite.sh docker/Dockerfile
 ```
 
 ### 3. Установка одной командой
 
 **Основная версия (2GB+ RAM):**
 ```bash
-bash <(curl -Ls https://raw.githubusercontent.com/YOUR_USERNAME/vpn-bot/main/install.sh)
+bash <(curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/install.sh)
 ```
 
 **Lite версия (512MB-1GB RAM):**
 ```bash
-bash <(curl -Ls https://raw.githubusercontent.com/YOUR_USERNAME/vpn-bot/main/install-lite.sh)
+bash <(curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/install-lite.sh)
 ```
 
 ---
@@ -137,17 +137,17 @@ https://github.com/new
 ### 2. Загрузите файлы
 
 ```bash
-cd /Users/shavlak/Desktop/vpn_bot/vpn-bot-project
+cd /Users/shavlak/Desktop/vpn_bot/BOTinok-project
 git init
 git add .
 git commit -m "Initial commit"
-git remote add origin https://github.com/YOUR_USERNAME/vpn-bot.git
+git remote add origin https://github.com/ShavlaK/BOTinok.git
 git push -u origin main
 ```
 
 ### 3. Обновите ссылки
 
-Замените `YOUR_USERNAME` в файлах:
+Замените `ShavlaK` в файлах:
 - README.md
 - install.sh
 - install-lite.sh
@@ -157,7 +157,7 @@ git push -u origin main
 
 На чистом сервере:
 ```bash
-bash <(curl -Ls https://raw.githubusercontent.com/YOUR_USERNAME/vpn-bot/main/install.sh)
+bash <(curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/install.sh)
 ```
 
 ---

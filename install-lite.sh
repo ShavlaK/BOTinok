@@ -14,7 +14,7 @@ set -e
 # Конфигурация
 # =============================================================================
 VERSION="1.0.0-LITE"
-PROJECT_NAME="vpn-bot-lite"
+PROJECT_NAME="BOTinok-lite"
 INSTALL_DIR="/root/$PROJECT_NAME"
 BOT_SERVICE_NAME="bot-lite"
 PYTHON_VERSION="3.9"  # Более старая версия для экономии памяти
@@ -53,7 +53,7 @@ show_banner() {
     echo "║                                                       ║"
     echo "║  Версия: $VERSION                                     ║"
     echo "║  RAM: 512MB - 1GB                                     ║"
-    echo "║  GitHub: https://github.com/YOUR_USERNAME/vpn-bot     ║"
+    echo "║  GitHub: https://github.com/ShavlaK/BOTinok     ║"
     echo "║                                                       ║"
     echo "╚═══════════════════════════════════════════════════════╝"
     echo -e "${NC}"
@@ -230,13 +230,13 @@ setup_bot() {
     # Загружаем только необходимые файлы
     log "Загрузка файлов бота..."
     
-    curl -Ls https://raw.githubusercontent.com/YOUR_USERNAME/vpn-bot/main/bot/bot.py -o bot.py
-    curl -Ls https://raw.githubusercontent.com/YOUR_USERNAME/vpn-bot/main/bot/requirements.txt -o requirements.txt
+    curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/bot.py -o bot.py
+    curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/requirements.txt -o requirements.txt
     
     mkdir -p data
-    curl -Ls https://raw.githubusercontent.com/YOUR_USERNAME/vpn-bot/main/bot/data/config.py -o data/config.py
-    curl -Ls https://raw.githubusercontent.com/YOUR_USERNAME/vpn-bot/main/bot/data/lang.yml -o data/lang.yml
-    curl -Ls https://raw.githubusercontent.com/YOUR_USERNAME/vpn-bot/main/bot/data/markup.py -o data/markup.py
+    curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/data/config.py -o data/config.py
+    curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/data/lang.yml -o data/lang.yml
+    curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/data/markup.py -o data/markup.py
     
     # Создаём виртуальное окружение для экономии памяти
     log "Создание виртуального окружения..."
@@ -333,7 +333,7 @@ RestartSec=10
 # Логирование
 StandardOutput=journal
 StandardError=journal
-SyslogIdentifier=vpn-bot-lite
+SyslogIdentifier=BOTinok-lite
 
 # Ограничения памяти для Lite версии
 MemoryLimit=512M

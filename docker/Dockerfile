@@ -1,10 +1,11 @@
-# Dockerfile для VPN бота
+# Dockerfile для BOTinok
 FROM python:3.11-slim
 
 # Метаданные
-LABEL maintainer="YOUR_USERNAME"
+LABEL maintainer="ShavlaK"
 LABEL version="1.0.0"
-LABEL description="VPN Bot for Telegram"
+LABEL description="BOTinok - VPN Bot for Telegram"
+LABEL repository="https://github.com/ShavlaK/BOTinok"
 
 # Рабочая директория
 WORKDIR /app

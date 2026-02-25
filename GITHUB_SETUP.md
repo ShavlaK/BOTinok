@@ -37,8 +37,8 @@ git add .
 # Сделайте первый коммит
 git commit -m "Initial commit: VPN Bot v1.0"
 
-# Добавьте удалённый репозиторий (замените YOUR_USERNAME)
-git remote add origin https://github.com/YOUR_USERNAME/vpn-bot.git
+# Добавьте удалённый репозиторий (замените ShavlaK)
+git remote add origin https://github.com/ShavlaK/BOTinok.git
 
 # Отправьте файлы на GitHub
 git push -u origin main
@@ -56,21 +56,21 @@ git push -u origin main
 
 ### 3.1 Отредактируйте файлы
 
-Замените `YOUR_USERNAME` на ваш ник GitHub в следующих файлах:
+Замените `ShavlaK` на ваш ник GitHub в следующих файлах:
 
 1. **README.md** (3 места):
-   - Строка 8: `https://github.com/YOUR_USERNAME/vpn-bot`
-   - Строка 36: `https://github.com/YOUR_USERNAME/vpn-bot`
-   - Строка 40: `https://github.com/YOUR_USERNAME/vpn-bot`
+   - Строка 8: `https://github.com/ShavlaK/BOTinok`
+   - Строка 36: `https://github.com/ShavlaK/BOTinok`
+   - Строка 40: `https://github.com/ShavlaK/BOTinok`
 
 2. **install.sh** (4 места):
-   - Строка 135: `https://github.com/YOUR_USERNAME/vpn-bot`
+   - Строка 135: `https://github.com/ShavlaK/BOTinok`
 
 3. **install-lite.sh** (3 места):
-   - Строка 133: `https://github.com/YOUR_USERNAME/vpn-bot`
+   - Строка 133: `https://github.com/ShavlaK/BOTinok`
 
 4. **docker/Dockerfile**:
-   - Строка 8: `YOUR_USERNAME`
+   - Строка 8: `ShavlaK`
 
 ### 3.2 Как заменить
 
@@ -78,8 +78,8 @@ git push -u origin main
 # В директории проекта
 cd /Users/shavlak/Desktop/vpn_bot/vpn-bot-project
 
-# Замените YOUR_USERNAME на ваш ник (пример: coden)
-sed -i '' 's/YOUR_USERNAME/coden/g' README.md install.sh install-lite.sh docker/Dockerfile
+# Замените ShavlaK на ваш ник (пример: coden)
+sed -i '' 's/ShavlaK/coden/g' README.md install.sh install-lite.sh docker/Dockerfile
 ```
 
 ---
@@ -110,7 +110,7 @@ git push
 
 Откройте в браузере:
 ```
-https://raw.githubusercontent.com/YOUR_USERNAME/vpn-bot/main/install.sh
+https://raw.githubusercontent.com/ShavlaK/BOTinok/main/install.sh
 ```
 
 Вы должны увидеть содержимое установочного скрипта.
@@ -121,10 +121,10 @@ https://raw.githubusercontent.com/YOUR_USERNAME/vpn-bot/main/install.sh
 
 ```bash
 # Основная версия
-bash <(curl -Ls https://raw.githubusercontent.com/YOUR_USERNAME/vpn-bot/main/install.sh)
+bash <(curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/install.sh)
 
 # Lite версия
-bash <(curl -Ls https://raw.githubusercontent.com/YOUR_USERNAME/vpn-bot/main/install-lite.sh)
+bash <(curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/install-lite.sh)
 ```
 
 ---
@@ -208,10 +208,10 @@ git push origin v1.0.0
 ```markdown
 # 🚀 VPN Bot
 
-[![Version](https://img.shields.io/github/v/release/YOUR_USERNAME/vpn-bot)](https://github.com/YOUR_USERNAME/vpn-bot/releases)
-[![License](https://img.shields.io/github/license/YOUR_USERNAME/vpn-bot)](LICENSE)
-[![Stars](https://img.shields.io/github/stars/YOUR_USERNAME/vpn-bot)](https://github.com/YOUR_USERNAME/vpn-bot/stargazers)
-[![Forks](https://img.shields.io/github/forks/YOUR_USERNAME/vpn-bot)](https://github.com/YOUR_USERNAME/vpn-bot/network/members)
+[![Version](https://img.shields.io/github/v/release/ShavlaK/BOTinok)](https://github.com/ShavlaK/BOTinok/releases)
+[![License](https://img.shields.io/github/license/ShavlaK/BOTinok)](LICENSE)
+[![Stars](https://img.shields.io/github/stars/ShavlaK/BOTinok)](https://github.com/ShavlaK/BOTinok/stargazers)
+[![Forks](https://img.shields.io/github/forks/ShavlaK/BOTinok)](https://github.com/ShavlaK/BOTinok/network/members)
 
 > Автоматическая установка VPN бота для Telegram
 ```
@@ -278,7 +278,7 @@ xui_credentials.txt
 # Проверьте что репозиторий существует
 # Проверьте права доступа
 # Для private репозиториев используйте токен:
-git remote set-url origin https://YOUR_TOKEN@github.com/YOUR_USERNAME/vpn-bot.git
+git remote set-url origin https://YOUR_TOKEN@github.com/ShavlaK/BOTinok.git
 ```
 
 ### Ошибка: "failed to push some refs"
@@ -293,7 +293,7 @@ git push
 ### Ошибка при установке: "404 Not Found"
 
 **Решение:**
-- Проверьте что заменили `YOUR_USERNAME` во всех файлах
+- Проверьте что заменили `ShavlaK` во всех файлах
 - Убедитесь что репозиторий public (или используйте токен)
 
 ---
@@ -311,7 +311,7 @@ git push
 
 - [ ] Репозиторий создан на GitHub
 - [ ] Все файлы загружены
-- [ ] `YOUR_USERNAME` заменён на ваш ник
+- [ ] `ShavlaK` заменён на ваш ник
 - [ ] `.env` в `.gitignore`
 - [ ] README.md заполнен
 - [ ] LICENSE добавлен

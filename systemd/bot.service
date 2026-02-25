@@ -1,7 +1,9 @@
 [Unit]
-Description=VPN Bot Service
+Description=BOTinok - VPN Bot Service
 After=network.target
 Wants=network-online.target
+
+# Документация: https://github.com/ShavlaK/BOTinok
 
 [Service]
 Type=simple
