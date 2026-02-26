@@ -15820,20 +15820,34 @@ async def start_bot():
     try:
         # Инициализация бота
         await create_bot()
-        
+
         if not all([x.isalpha() or x.isdigit() for x in NAME_BOT_CONFIG]):
             await send_admins(None, '🛑🛑🛑Не верно указано имя для конфигураций конфига (/get_config -> NAME_BOT_CONFIG)🛑🛑🛑')
 
-        tasks = []
+        # Запускаем polling и фоновые задачи
         await dp.skip_updates()
-        tasks.append(asyncio.create_task(dp.start_polling()))
-        tasks.append(asyncio.create_task(check_zaprosi()))
-        tasks.append(asyncio.create_task(check_time_create_backup()))
-        tasks.append(asyncio.create_task(check_keys_no_in_db()))
-        tasks.append(asyncio.create_task(check_clients_and_keys()))
-        tasks.append(asyncio.create_task(check_servers_on()))
-        tasks.append(asyncio.create_task(get_kurs_usdtrub_garantex()))
-        await asyncio.gather(*tasks)
+        
+        # Запускаем polling (блокирующий)
+        polling_task = asyncio.create_task(dp.start_polling())
+        
+        # Запускаем фоновые задачи
+        tasks = [
+            asyncio.create_task(check_zaprosi()),
+            asyncio.create_task(check_time_create_backup()),
+            asyncio.create_task(check_keys_no_in_db()),
+            asyncio.create_task(check_clients_and_keys()),
+            asyncio.create_task(check_servers_on()),
+            asyncio.create_task(get_kurs_usdtrub_garantex())
+        ]
+        
+        # Ждём завершения polling (никогда не завершится пока бот работает)
+        await polling_task
+        
+        # Отменяем фоновые задачи при остановке
+        for task in tasks:
+            task.cancel()
+        
+        await asyncio.gather(*tasks, return_exceptions=True)
     except Exception as e:
         logger.warning(f'🛑Ошибка в start_bot: {e}')
         await Print_Error()
@@ -15842,7 +15856,10 @@ async def start_bot():
 
 if __name__ == '__main__':
     try:
-        asyncio.run(start_bot())
+        # Запускаем в цикле событий
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(start_bot())
     except Exception as e:
         logger.warning(f'🛑🛑🛑🛑🛑Ошибка в if __name__ == "__main__":: {e}')
         restartBot()
