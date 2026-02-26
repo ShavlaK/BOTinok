@@ -167,25 +167,60 @@ create_project_dir() {
 download_bot_files() {
     log "Загрузка файлов бота из GitHub..."
     cd $INSTALL_DIR
-    
+
     # Скачиваем основные файлы
+    log "Загрузка bot.py..."
     curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/bot.py -o bot.py
+    
+    log "Загрузка requirements.txt..."
     curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/requirements.txt -o requirements.txt
     
+    # Проверяем что requirements.txt скачался
+    if [ ! -f "requirements.txt" ] || [ ! -s "requirements.txt" ]; then
+        log_error "Не удалось загрузить requirements.txt!"
+        log "Создаю резервный файл..."
+        cat > requirements.txt << 'EOF'
+aiogram==2.25.1
+aiohttp==3.8.3
+aiosqlite==0.19.0
+paramiko==3.1.0
+outline-vpn-api==3.0.0
+yoomoney==0.1.0
+yookassa==3.0.0
+tinkoff-acquiring-api==0.1.3
+walletpay==1.3.1
+cryptomusapi==1.0.1
+aaioasync==0.1.9
+freekassa-ru==0.0.7
+qrcode==7.4.2
+Pillow==9.4.0
+path==16.6.0
+pandas==2.0.1
+plotly==5.14.1
+numpy==1.24.3
+pyyaml==6.0
+requests==2.31.0
+flask==2.3.1
+flask-httpauth==4.8.0
+pydantic==2.5.3
+EOF
+    fi
+
     # Скачиваем файлы конфигурации
+    log "Загрузка файлов конфигурации..."
     curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/data/config.py -o data/config.py
     curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/data/lang.yml -o data/lang.yml
     curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/data/markup.py -o data/markup.py
     curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/data/markup_inline.py -o data/markup_inline.py
-    
+
     # Скачиваем утилиты (обязательно!)
     curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/data/whitelist_utils.py -o data/whitelist_utils.py
-    
+
     # Скачиваем медиафайлы
     curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/data/LOGO.png -o data/LOGO.png 2>/dev/null || true
     curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/data/download.jpg -o data/download.jpg 2>/dev/null || true
     curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/data/upload.jpg -o data/upload.jpg 2>/dev/null || true
-    
+
     log_success "Файлы бота загружены"
     cd - > /dev/null
 }
