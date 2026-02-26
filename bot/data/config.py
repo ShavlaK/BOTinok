@@ -1,55 +1,86 @@
-# Токены ботов
-TOKEN_MAIN = '' # Основной токен бота
+# =============================================================================
+# BOTinok Configuration
+# =============================================================================
+# Этот файл загружает настройки из .env файла или использует значения по умолчанию
+# =============================================================================
 
+import os
+from pathlib import Path
+
+# Определяем директорию проекта
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Пытаемся загрузить .env файл
+env_file = BASE_DIR / '.env'
+if env_file.exists():
+    # Читаем .env файл вручную (без сторонних библиотек)
+    with open(env_file, 'r', encoding='utf-8') as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith('#') and '=' in line:
+                key, value = line.split('=', 1)
+                key = key.strip()
+                value = value.strip().strip("'\"")
+                os.environ.setdefault(key, value)
+
+# =============================================================================
+# Токены ботов
+# =============================================================================
+
+TOKEN_MAIN = os.environ.get('TOKEN_MAIN', '') # Основной токен бота
+
+# =============================================================================
 # Основные данные
+# =============================================================================
+
 ADMINS_IDS = [] # Дополнительные администраторы (указывать через запятую = [123456789, 987654321])
-MY_ID_TELEG = 782280769 # Id администратора Telegram
+MY_ID_TELEG = int(os.environ.get('MY_ID_TELEG', 782280769)) # Id администратора Telegram
 PHONE_NUMBER = '' # Номер телефона для переводов (если необходимо отключить возможностью перевода, просто установите поле = '')
-NICK_HELP = 'codenlx' # Ник пользователя для помощи
-NAME_AUTHOR_BOT = 'Александр' # Имя кто создал BOT
-NAME_BOT_CONFIG = 'VPCoden' # Название бота (только буквы и цифры)
+NICK_HELP = os.environ.get('NICK_HELP', 'codenlx') # Ник пользователя для помощи
+NAME_AUTHOR_BOT = os.environ.get('NAME_AUTHOR_BOT', 'Александр') # Имя кто создал BOT
+NAME_BOT_CONFIG = os.environ.get('NAME_BOT_CONFIG', 'VPCoden') # Название бота (только буквы и цифры)
 
 # Маркетинг
-COUNT_DAYS_TRIAL = 2 # Количество дней пробного периода
-COUNT_DAYS_REF = 7 # Количество дней за приглашенного пользователя
-COUNT_DAYS_OTCHET = 7 # За какое кол-во дней брать отчет о скором конце доступа ключей пользователей
-DAYS_PARTNER_URLS_DELETE = 7 # Через сколько дней удалять ссылки партнеров, если по ним не было переходов
-HOUR_CHECK = 7 # В какой час производить проверку ключей (по МСК, устанавливается 1 раз при первом запуске бота)
+COUNT_DAYS_TRIAL = int(os.environ.get('COUNT_DAYS_TRIAL', 2))
+COUNT_DAYS_REF = int(os.environ.get('COUNT_DAYS_REF', 7))
+COUNT_DAYS_OTCHET = int(os.environ.get('COUNT_DAYS_OTCHET', 7))
+DAYS_PARTNER_URLS_DELETE = int(os.environ.get('DAYS_PARTNER_URLS_DELETE', 7))
+HOUR_CHECK = int(os.environ.get('HOUR_CHECK', 7))
 
 # Модули (True - включен, False - выключен)
-PAY_CHANGE_PROTOCOL = False # Вкл/выкл оплату для смены протокола
-PAY_CHANGE_LOCATIONS = False # Вкл/выкл оплату для смены локации
-STOP_KEY = True # Вкл/выкл возможность клиентам в раздлеле Мои активные ключи временно отключать ключ, чтобы не шло время (ключ в это время будет не активным, но будет занимать место на сервере)
+PAY_CHANGE_PROTOCOL = os.environ.get('PAY_CHANGE_PROTOCOL', 'False').lower() == 'true'
+PAY_CHANGE_LOCATIONS = os.environ.get('PAY_CHANGE_LOCATIONS', 'False').lower() == 'true'
+STOP_KEY = os.environ.get('STOP_KEY', 'True').lower() == 'true'
 
-OPLATA = True # Вкл/выкл систему оплаты (пример: продажа BOT через магазины, только через промокоды)
-REF_SYSTEM = True # Вкл/выкл реферальную систему
-REF_SYSTEM_AFTER_PAY = False # Вкл/выкл проверку оплаты для начисления дней по реферальной системе
-TEST_KEY = True # Вкл/выкл тестовые ключи
+OPLATA = os.environ.get('OPLATA', 'True').lower() == 'true'
+REF_SYSTEM = os.environ.get('REF_SYSTEM', 'True').lower() == 'true'
+REF_SYSTEM_AFTER_PAY = os.environ.get('REF_SYSTEM_AFTER_PAY', 'False').lower() == 'true'
+TEST_KEY = os.environ.get('TEST_KEY', 'True').lower() == 'true'
 
-WEB_APP_PAY = False # Вкл/выкл оплату через веб-приложение
-INLINE_MODE = False # Вкл/выкл Inline-режим кнопок (большинство кнопок будет под сообщением)
-IS_OTCHET = False # Вкл/выкл отчет каждый день за предыдущий день (по умолчанию отключено и приходит важные действия пользователей сразу (вызвал оплату, оплатил и так далее))
+WEB_APP_PAY = os.environ.get('WEB_APP_PAY', 'False').lower() == 'true'
+INLINE_MODE = os.environ.get('INLINE_MODE', 'False').lower() == 'true'
+IS_OTCHET = os.environ.get('IS_OTCHET', 'False').lower() == 'true'
 
-WHY_BOT_PAY = True # Вкл/выкл кнопку "Почему BOT платный?"
-DONATE_SYSTEM = True # Вкл/выкл систему донатов
-OBESH_PLATEZH = True # Вкл/выкл систему обещанного платежа
-SEND_QR = False # Вкл/выкл отправку QR-кода (WireGuard) - ОТКЛЮЧЕН
-OPROS = True # Вкл/выкл опрос (Все супер -> ненавязчивое предложение задонатить или Есть что дополнить? -> написать свой отзыв)
+WHY_BOT_PAY = os.environ.get('WHY_BOT_PAY', 'True').lower() == 'true'
+DONATE_SYSTEM = os.environ.get('DONATE_SYSTEM', 'True').lower() == 'true'
+OBESH_PLATEZH = os.environ.get('OBESH_PLATEZH', 'True').lower() == 'true'
+SEND_QR = os.environ.get('SEND_QR', 'False').lower() == 'true'
+OPROS = os.environ.get('OPROS', 'True').lower() == 'true'
 
 # Протоколы - ОСТАВЛЕН ТОЛЬКО VLESS
-PR_VLESS = True # Вкл/выкл протокол VLESS
-PR_OUTLINE = False # Вкл/выкл протокол Outline - ОТКЛЮЧЕН
-PR_WIREGUARD = False # Вкл/выкл протокол WireGuard - ОТКЛЮЧЕН
-PR_PPTP = False # Вкл/выкл протокол PPTP - ОТКЛЮЧЕН
+PR_VLESS = os.environ.get('PR_VLESS', 'True').lower() == 'true'
+PR_OUTLINE = os.environ.get('PR_OUTLINE', 'False').lower() == 'true'
+PR_WIREGUARD = os.environ.get('PR_WIREGUARD', 'False').lower() == 'true'
+PR_PPTP = os.environ.get('PR_PPTP', 'False').lower() == 'true'
 
-DEFAULT_PROTOCOL = 'vless' # Протокол по умолчанию (vless, outline, wireguard) (если = '', то будет предложено выбрать протокол при покупке)
-VLESS_LIMIT_IP = 1 # Кол-во устройств, которые могут одновременно подключаться по одному ключу (работает только для VLESS)
+DEFAULT_PROTOCOL = os.environ.get('DEFAULT_PROTOCOL', 'vless')
+VLESS_LIMIT_IP = int(os.environ.get('VLESS_LIMIT_IP', 1))
 
 # Инструкции - ОСТАВЛЕНА ТОЛЬКО VLESS
-HELP_VLESS = True # Вкл/выкл помощь для протокола VLESS
-HELP_OUTLINE = False # Вкл/выкл помощь для протокола Outline - ОТКЛЮЧЕН
-HELP_WIREGUARD = False # Вкл/выкл помощь для протокола WireGuard - ОТКЛЮЧЕН
-HELP_PPTP = False # Вкл/выкл помощь для протокола PPTP - ОТКЛЮЧЕН
+HELP_VLESS = os.environ.get('HELP_VLESS', 'True').lower() == 'true'
+HELP_OUTLINE = os.environ.get('HELP_OUTLINE', 'False').lower() == 'true'
+HELP_WIREGUARD = os.environ.get('HELP_WIREGUARD', 'False').lower() == 'true'
+HELP_PPTP = os.environ.get('HELP_PPTP', 'False').lower() == 'true'
 
 ### Откуда пришел клиент
 # Для создания специальной ссылки необходимо в указать номер по порядку, допустим:
