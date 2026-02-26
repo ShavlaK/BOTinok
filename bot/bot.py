@@ -67,6 +67,12 @@ users_send_opros, users_send_close_repiod = {}, {}
 is_send_backup = False
 is_delete_keys_no_in_DB = False
 
+# Переменные для бота
+bot = None
+dp = None
+bot_log = None
+BOT_NICK = None
+
 TARIF_1 = 149
 TARIF_3 = 379
 TARIF_6 = 749
@@ -5673,7 +5679,7 @@ async def create_bot():
     except Exception as e:
         logger.warning(f'🛑Ошибка в createBot: {e}')
 
-asyncio.run(create_bot())
+# asyncio.run(create_bot())  # Вызывается в start_bot()
 
 async def get_user_id_connect_to_channel(chat_id, user_id):
     try:
@@ -15812,6 +15818,9 @@ def restartBot():
 
 async def start_bot():
     try:
+        # Инициализация бота
+        await create_bot()
+        
         if not all([x.isalpha() or x.isdigit() for x in NAME_BOT_CONFIG]):
             await send_admins(None, '🛑🛑🛑Не верно указано имя для конфигураций конфига (/get_config -> NAME_BOT_CONFIG)🛑🛑🛑')
 
