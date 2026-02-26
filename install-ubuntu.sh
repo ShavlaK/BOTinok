@@ -252,30 +252,56 @@ install_xui() {
     export XUI_PANEL_PASSWORD=$XUI_PASSWORD
     export XUI_PANEL_BASE_PATH=$XUI_BASE_PATH
     
+    log "Установка 3X-UI (это займёт 2-3 минуты)..."
     yes "" | bash /tmp/x-ui-install.sh >/dev/null 2>&1
     rm -f /tmp/x-ui-install.sh
     unset XUI_PANEL_PORT XUI_PANEL_USERNAME XUI_PANEL_PASSWORD XUI_PANEL_BASE_PATH
 
     # Настраиваем SSL
     log "Настройка SSL сертификата..."
-    EXTERNAL_IP=$(curl -s ifconfig.me)
-    log "  Внешний IP: $EXTERNAL_IP"
     
-    if ! command -v ~/.acme.sh/acme.sh &> /dev/null; then
-        curl https://get.acme.sh | sh &>/dev/null
-        source ~/.bashrc
-    fi
+    # Получаем IPv4 адрес (для SSL сертификата)
+    EXTERNAL_IP=$(curl -s -4 ifconfig.me 2>/dev/null || curl -s ifconfig.me 2>/dev/null || echo "")
     
-    ~/.acme.sh/acme.sh --issue --standalone -d $EXTERNAL_IP --listen-v4 --force &>/dev/null
-    ~/.acme.sh/acme.sh --install-cert -d $EXTERNAL_IP \
-        --key-file /root/private.key \
-        --fullchain-file /root/cert.crt \
-        --reloadcmd "systemctl force-reload x-ui" &>/dev/null
-    
-    /usr/local/x-ui/x-ui cert -s &>/dev/null
-
-    # Сохраняем учётные данные
-    cat > $INSTALL_DIR/xui_credentials.txt << EOF
+    if [ -z "$EXTERNAL_IP" ] || [[ "$EXTERNAL_IP" == *":"* ]]; then
+        # Если нет IPv4, используем IPv6 (без SSL)
+        log_warning "IPv4 не найден, используем IPv6 (SSL не настраивается)"
+        EXTERNAL_IP=$(curl -s ifconfig.me 2>/dev/null || echo "unknown")
+        
+        cat > $INSTALL_DIR/xui_credentials.txt << EOF
+════════════════════════════════════════════════════════
+  🔐 3X-UI PANEL CREDENTIALS
+════════════════════════════════════════════════════════
+  URL:      http://$EXTERNAL_IP:$XUI_PORT/$XUI_BASE_PATH
+  Username: $XUI_USERNAME
+  Password: $XUI_PASSWORD
+  
+  ⚠️  IPv6 - SSL не настроен (используйте HTTP или настройте домен)
+  ⚠️  СОХРАНИТЕ ЭТИ ДАННЫЕ!
+════════════════════════════════════════════════════════
+EOF
+        log_success "3X-UI установлена (без SSL)"
+    else
+        # IPv4 найден - настраиваем SSL
+        log "  Внешний IP: $EXTERNAL_IP (IPv4)"
+        
+        if ! command -v ~/.acme.sh/acme.sh &> /dev/null; then
+            curl https://get.acme.sh | sh &>/dev/null
+            source ~/.bashrc
+        fi
+        
+        log "  Выпуск SSL сертификата..."
+        ~/.acme.sh/acme.sh --issue --standalone -d $EXTERNAL_IP --listen-v4 --force &>/dev/null
+        
+        if [ $? -eq 0 ]; then
+            ~/.acme.sh/acme.sh --install-cert -d $EXTERNAL_IP \
+                --key-file /root/private.key \
+                --fullchain-file /root/cert.crt \
+                --reloadcmd "systemctl force-reload x-ui" &>/dev/null
+            
+            /usr/local/x-ui/x-ui cert -s &>/dev/null
+            
+            cat > $INSTALL_DIR/xui_credentials.txt << EOF
 ════════════════════════════════════════════════════════
   🔐 3X-UI PANEL CREDENTIALS
 ════════════════════════════════════════════════════════
@@ -286,8 +312,24 @@ install_xui() {
   ⚠️  СОХРАНИТЕ ЭТИ ДАННЫЕ!
 ════════════════════════════════════════════════════════
 EOF
+            log_success "3X-UI установлена + SSL настроен"
+        else
+            log_warning "Не удалось получить SSL сертификат"
+            cat > $INSTALL_DIR/xui_credentials.txt << EOF
+════════════════════════════════════════════════════════
+  🔐 3X-UI PANEL CREDENTIALS
+════════════════════════════════════════════════════════
+  URL:      http://$EXTERNAL_IP:$XUI_PORT/$XUI_BASE_PATH
+  Username: $XUI_USERNAME
+  Password: $XUI_PASSWORD
+  
+  ⚠️  SSL не настроен (используйте HTTP)
+  ⚠️  СОХРАНИТЕ ЭТИ ДАННЫЕ!
+════════════════════════════════════════════════════════
+EOF
+        fi
+    fi
 
-    log_success "3X-UI установлена"
     log "🔐 Учётные данные: $INSTALL_DIR/xui_credentials.txt"
     
     export XUI_PORT=$XUI_PORT
