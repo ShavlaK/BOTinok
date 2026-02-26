@@ -35,16 +35,15 @@ log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
 show_banner() {
     clear
-    echo -e "${CYAN}"
-    echo "╔═══════════════════════════════════════════════════════╗"
-    echo "║                                                       ║"
-    echo "║     🚀 BOTinok - Установка для Ubuntu 20.04 LTS       ║"
-    echo "║                                                       ║"
-    echo "║  Версия: $VERSION                                     ║"
-    echo "║  GitHub: https://github.com/ShavlaK/BOTinok           ║"
-    echo "║                                                       ║"
-    echo "╚═══════════════════════════════════════════════════════╝"
-    echo -e "${NC}"
+    echo ""
+    echo "+======================================================+"
+    echo "|                                                      |"
+    echo "|     BOTinok - Установка для Ubuntu 20.04 LTS         |"
+    echo "|                                                      |"
+    echo "|  Версия: $VERSION                                    |"
+    echo "|  GitHub: https://github.com/ShavlaK/BOTinok          |"
+    echo "|                                                      |"
+    echo "+======================================================+"
     echo ""
 }
 
