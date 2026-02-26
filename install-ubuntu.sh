@@ -220,6 +220,9 @@ install_docker() {
 install_python_deps() {
     log "Установка Python зависимостей..."
 
+    # Создаём директорию если нет
+    mkdir -p $INSTALL_DIR
+    
     cd $INSTALL_DIR
 
     # Создаём виртуальное окружение если нет
