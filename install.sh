@@ -173,39 +173,45 @@ install_dependencies() {
 }
 
 # =============================================================================
-# Установка Python
+# Установка Python зависимостей
 # =============================================================================
-install_python() {
-    log "Установка Python $PYTHON_VERSION..."
-    
-    # Проверяем есть ли Python 3.11
-    if python3.11 --version &> /dev/null; then
-        log_success "Python $PYTHON_VERSION уже установлен"
-        return 0
+install_python_deps() {
+    log "Установка Python зависимостей..."
+
+    # Проверяем установлен ли pip
+    if ! command -v pip3 &> /dev/null && ! command -v pip3.11 &> /dev/null; then
+        log "pip не найден, устанавливаю..."
+        
+        # Пробуем установить pip
+        if command -v python3.11 &> /dev/null; then
+            # Для Python 3.11
+            curl -sS https://bootstrap.pypa.io/get-pip.py | python3.11
+            ln -sf /usr/local/bin/pip3 /usr/bin/pip3 2>/dev/null || true
+        else
+            # Для системы
+            apt-get install -y python3-pip python3-venv
+            ln -sf /usr/bin/pip3 /usr/bin/pip 2>/dev/null || true
+        fi
     fi
     
-    # Установка Python 3.11
-    cd /tmp
-    
-    # Загружаем исходники
-    wget -q https://www.python.org/ftp/python/$PYTHON_VERSION.4/Python-$PYTHON_VERSION.4.tgz
-    tar -xzf Python-$PYTHON_VERSION.4.tgz
-    cd Python-$PYTHON_VERSION.4
-    
-    # Компиляция
-    ./configure --enable-optimizations
-    make -j$(nproc)
-    make install
-    
-    # Создаём симлинки
-    ln -sf /usr/local/bin/python3.11 /usr/bin/python3.11
-    ln -sf /usr/local/bin/pip3.11 /usr/bin/pip3.11
-    
-    # Очистка
-    cd /tmp
-    rm -rf Python-$PYTHON_VERSION.4*
-    
-    log_success "Python $PYTHON_VERSION установлен"
+    log_success "pip установлен"
+
+    # Устанавливаем зависимости
+    if [ -f "$INSTALL_DIR/requirements.txt" ]; then
+        log "Установка зависимостей из requirements.txt..."
+        
+        if command -v python3.11 &> /dev/null; then
+            python3.11 -m pip install --upgrade pip
+            python3.11 -m pip install -r $INSTALL_DIR/requirements.txt
+        else
+            pip3 install --upgrade pip
+            pip3 install -r $INSTALL_DIR/requirements.txt
+        fi
+        
+        log_success "Зависимости установлены"
+    else
+        log_warning "requirements.txt не найден"
+    fi
 }
 
 # =============================================================================
@@ -302,40 +308,42 @@ EOF
 }
 
 # =============================================================================
-# Настройка бота
+# Настройка бота (ПОЛНОСТЬЮ АВТОМАТИЧЕСКИ)
 # =============================================================================
 setup_bot() {
     log "Настройка бота..."
-    
+
     # Создаём директорию
     mkdir -p $INSTALL_DIR
-    
-    # Копируем файлы бота
+    mkdir -p $INSTALL_DIR/data
+    mkdir -p $INSTALL_DIR/logs
+
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    
+
     if [ -d "$SCRIPT_DIR/bot" ]; then
+        # Копируем локальные файлы
+        log "Копирование файлов бота..."
         cp -r $SCRIPT_DIR/bot/* $INSTALL_DIR/
     else
         # Загружаем из GitHub
         log "Загрузка файлов бота из GitHub..."
         cd $INSTALL_DIR
-        
+
         curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/bot.py -o bot.py
         curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/requirements.txt -o requirements.txt
-        
+
         mkdir -p data
         curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/data/config.py -o data/config.py
         curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/data/lang.yml -o data/lang.yml
         curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/data/markup.py -o data/markup.py
         curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/data/markup_inline.py -o data/markup_inline.py
+        
+        # Копируем медиафайлы если есть
+        curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/data/LOGO.png -o data/LOGO.png 2>/dev/null || true
+        curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/data/download.jpg -o data/download.jpg 2>/dev/null || true
     fi
-    
-    # Устанавливаем зависимости Python
-    log "Установка Python зависимостей..."
-    cd $INSTALL_DIR
-    pip3.11 install -r requirements.txt
-    
-    log_success "Бот настроен"
+
+    log_success "Файлы бота загружены"
 }
 
 # =============================================================================
@@ -489,38 +497,46 @@ EOF
 }
 
 # =============================================================================
-# Создание systemd сервиса
+# Создание systemd сервиса (ПРАВИЛЬНЫЙ ФОРМАТ)
 # =============================================================================
 create_service() {
     log "Создание systemd сервиса..."
-    
-    cat > /etc/systemd/system/$BOT_SERVICE_NAME.service << EOF
+
+    cat > /etc/systemd/system/$BOT_SERVICE_NAME.service << 'EOF'
 [Unit]
-Description=BOTinok Service
+Description=BOTinok - Telegram VPN Bot
 After=network.target
+Wants=network-online.target
 
 [Service]
 Type=simple
 User=root
-WorkingDirectory=$INSTALL_DIR
-ExecStart=/usr/local/bin/python3.11 $INSTALL_DIR/bot.py
+WorkingDirectory=/root/BOTinok
+ExecStart=/usr/bin/python3.11 /root/BOTinok/bot.py
 Restart=always
 RestartSec=10
+RestartPreventExitStatus=1
+
+# Переменные окружения
 Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONIOENCODING=utf-8
 
 # Логирование
 StandardOutput=journal
 StandardError=journal
-SyslogIdentifier=BOTinok
+SyslogIdentifier=botinok
 
 # Лимиты
 LimitNOFILE=65535
 Nice=-5
 
+# Безопасность
+NoNewPrivileges=false
+
 [Install]
 WantedBy=multi-user.target
 EOF
-    
+
     # Перезагружаем systemd и включаем сервис
     systemctl daemon-reload
     systemctl enable $BOT_SERVICE_NAME
@@ -695,14 +711,15 @@ print_summary() {
 # =============================================================================
 main() {
     show_banner
-    
+
     check_root
     check_server
     update_system
     install_dependencies
-    install_python
+    install_python_deps      # Установка pip и зависимостей
     install_xui
-    setup_bot
+    setup_bot                # Загрузка файлов бота
+    install_python_deps      # Повторная установка зависимостей (после загрузки requirements.txt)
     create_env
     create_service
     setup_firewall
