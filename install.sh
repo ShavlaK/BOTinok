@@ -173,52 +173,46 @@ install_dependencies() {
 }
 
 # =============================================================================
-# Установка Python зависимостей
+# Установка Python зависимостей (ЧЕРЕЗ VENV - правильно для Debian 12+)
 # =============================================================================
 install_python_deps() {
     log "Установка Python зависимостей..."
 
-    # Проверяем установлен ли pip
-    if ! command -v pip3 &> /dev/null && ! command -v pip3.11 &> /dev/null; then
-        log "pip не найден, устанавливаю..."
+    cd $INSTALL_DIR
+
+    # Создаём виртуальное окружение если нет
+    if [ ! -d "$INSTALL_DIR/venv" ]; then
+        log "Создание виртуального окружения Python..."
         
-        # Пробуем установить pip
         if command -v python3.11 &> /dev/null; then
-            # Для Python 3.11 - используем get-pip.py
-            log "Загрузка get-pip.py..."
-            curl -sS https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py
-            
-            # Устанавливаем с флагом --break-system-packages (нужно для Debian 12+)
-            python3.11 /tmp/get-pip.py --break-system-packages
-            
-            ln -sf /usr/local/bin/pip3 /usr/bin/pip3 2>/dev/null || true
-            ln -sf /usr/local/bin/pip /usr/bin/pip 2>/dev/null || true
-            rm -f /tmp/get-pip.py
+            python3.11 -m venv venv
         else
-            # Для системы
-            apt-get install -y python3-pip python3-venv python3-full
-            ln -sf /usr/bin/pip3 /usr/bin/pip 2>/dev/null || true
+            python3 -m venv venv
         fi
+        
+        log_success "Виртуальное окружение создано"
     fi
-    
-    log_success "pip установлен"
+
+    # Активируем venv
+    source $INSTALL_DIR/venv/bin/activate
+
+    # Обновляем pip
+    log "Обновление pip..."
+    python -m pip install --upgrade pip --quiet
 
     # Устанавливаем зависимости
     if [ -f "$INSTALL_DIR/requirements.txt" ]; then
         log "Установка зависимостей из requirements.txt..."
-        
-        if command -v python3.11 &> /dev/null; then
-            python3.11 -m pip install --upgrade pip --break-system-packages
-            python3.11 -m pip install -r $INSTALL_DIR/requirements.txt --break-system-packages
-        else
-            pip3 install --upgrade pip --break-system-packages
-            pip3 install -r $INSTALL_DIR/requirements.txt --break-system-packages
-        fi
-        
+        pip install -r $INSTALL_DIR/requirements.txt --quiet
         log_success "Зависимости установлены"
     else
         log_warning "requirements.txt не найден"
     fi
+
+    # Деактивируем venv
+    deactivate 2>/dev/null || true
+    
+    cd - > /dev/null
 }
 
 # =============================================================================
@@ -504,7 +498,7 @@ EOF
 }
 
 # =============================================================================
-# Создание systemd сервиса (ПРАВИЛЬНЫЙ ФОРМАТ)
+# Создание systemd сервиса (ПРАВИЛЬНЫЙ ФОРМАТ + VENV)
 # =============================================================================
 create_service() {
     log "Создание systemd сервиса..."
@@ -519,14 +513,16 @@ Wants=network-online.target
 Type=simple
 User=root
 WorkingDirectory=/root/BOTinok
-ExecStart=/usr/bin/python3.11 /root/BOTinok/bot.py
+
+# Активируем виртуальное окружение и запускаем бота
+Environment=PATH=/root/BOTinok/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONIOENCODING=utf-8
+
+ExecStart=/root/BOTinok/venv/bin/python /root/BOTinok/bot.py
 Restart=always
 RestartSec=10
 RestartPreventExitStatus=1
-
-# Переменные окружения
-Environment=PYTHONUNBUFFERED=1
-Environment=PYTHONIOENCODING=utf-8
 
 # Логирование
 StandardOutput=journal
