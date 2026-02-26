@@ -67,19 +67,25 @@
 
 ## 🚀 Быстрый старт
 
-### 1. Основная версия (2GB+ RAM)
+### 1. Для Ubuntu Server 20.04 LTS (рекомендуется)
+
+```bash
+bash <(curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/install-ubuntu.sh)
+```
+
+### 2. Для Debian 11/12
 
 ```bash
 bash <(curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/install.sh)
 ```
 
-### 2. Lite версия (512MB-1GB RAM)
+### 3. Lite версия (512MB-1GB RAM)
 
 ```bash
 bash <(curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/install-lite.sh)
 ```
 
-### 3. Docker версия
+### 4. Docker версия
 
 ```bash
 git clone https://github.com/ShavlaK/BOTinok.git
