@@ -1,22 +1,22 @@
 # BOTinok - Python Dependencies
-# Ubuntu Server 20.04 LTS / Python 3.8
+# Совместимо с Python 3.8 - 3.12
 
 # Telegram Bot Framework
 aiogram==2.25.1
-aiohttp==3.8.3
+aiohttp==3.9.1
 
 # Database
 aiosqlite==0.19.0
 
 # SSH & Remote Access
-paramiko==3.1.0
+paramiko==3.4.0
 
 # VPN Libraries
 outline-vpn-api==3.0.0
 
 # Payment Systems
 yoomoney==0.1.0
-yookassa==3.0.0
+yookassa==3.2.0
 tinkoff-acquiring-api==0.1.3
 walletpay==1.3.1
 cryptomusapi==1.0.1
@@ -25,17 +25,20 @@ freekassa-ru==0.0.7
 
 # Utilities
 qrcode==7.4.2
-Pillow==9.4.0
-path==16.6.0
-pandas==2.0.1
-plotly==5.14.1
-numpy==1.24.3
-pyyaml==6.0
+Pillow==10.2.0
+path==16.9.0
+pandas==2.2.0
+plotly==5.18.0
+numpy==1.26.3
+pyyaml==6.0.1
 requests==2.31.0
 
 # Web Server (for redirects)
-flask==2.3.1
+flask==3.0.0
 flask-httpauth==4.8.0
 
 # Cryptography
 pydantic==2.5.3
+
+# Additional dependencies
+setuptools>=65.0.0
