@@ -14,15 +14,19 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 env_file = BASE_DIR / '.env'
 if env_file.exists():
     # Читаем .env файл вручную (без сторонних библиотек)
-    with open(env_file, 'r', encoding='utf-8') as f:
-        for line in f:
-            line = line.strip()
-            if line and not line.startswith('#') and '=' in line:
-                key, value = line.split('=', 1)
-                key = key.strip()
-                value = value.strip().strip("'\"")
-                # Используем прямое присваивание вместо setdefault
-                os.environ[key] = value
+    try:
+        with open(env_file, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#') and '=' in line:
+                    key, value = line.split('=', 1)
+                    key = key.strip()
+                    value = value.strip().strip("'\"")
+                    # Используем прямое присваивание вместо setdefault
+                    os.environ[key] = value
+    except (UnicodeDecodeError, IOError) as e:
+        # Если не удалось прочитать .env, используем значения по умолчанию
+        print(f"Warning: Could not read .env file: {e}")
 
 # =============================================================================
 # Токены ботов
