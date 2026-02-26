@@ -21,7 +21,8 @@ if env_file.exists():
                 key, value = line.split('=', 1)
                 key = key.strip()
                 value = value.strip().strip("'\"")
-                os.environ.setdefault(key, value)
+                # Используем прямое присваивание вместо setdefault
+                os.environ[key] = value
 
 # =============================================================================
 # Токены ботов
