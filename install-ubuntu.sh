@@ -509,8 +509,9 @@ WorkingDirectory=/root/BOTinok
 Environment=PATH=/root/BOTinok/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 Environment=PYTHONUNBUFFERED=1
 Environment=PYTHONIOENCODING=utf-8
+Environment=PYTHONFAULTHANDLER=1
 
-ExecStart=/root/BOTinok/venv/bin/python /root/BOTinok/bot.py
+ExecStart=/root/BOTinok/venv/bin/python -u /root/BOTinok/bot.py
 Restart=always
 RestartSec=10
 RestartPreventExitStatus=1
