@@ -555,6 +555,151 @@ setup_firewall() {
 }
 
 # =============================================================================
+# Создание базы данных
+# =============================================================================
+create_database() {
+    log "Создание базы данных..."
+    
+    cd $INSTALL_DIR
+    source venv/bin/activate
+    
+    python << 'EOF'
+import asyncio
+from aiosqlite import connect
+import os
+
+async def create_db():
+    db_path = 'data/db.db'
+    
+    if os.path.exists(db_path):
+        print("База данных уже существует")
+        return
+    
+    conn = await connect(db_path)
+    cursor = await conn.cursor()
+    
+    # Таблица Users
+    await cursor.execute("""
+        CREATE TABLE IF NOT EXISTS Users (
+            User_id bigint PRIMARY KEY NOT NULL,
+            First_Name text NOT NULL DEFAULT('Имя не указано'),
+            Last_Name text,
+            Nick text NOT NULL DEFAULT('Ник'),
+            Selected_id_Ustr integer NOT NULL DEFAULT(2),
+            id_Otkuda integer NOT NULL DEFAULT(0),
+            get_test_key bool NOT NULL DEFAULT(0),
+            days_by_buy integer NOT NULL DEFAULT(30),
+            Summ integer NOT NULL DEFAULT(0),
+            Date date,
+            Promo text NOT NULL DEFAULT(''),
+            Date_reg date,
+            isBan bool NOT NULL DEFAULT(0),
+            isPayChangeProtocol bool NOT NULL DEFAULT(0),
+            datePayChangeLocations date,
+            Lang text DEFAULT('Русский'),
+            id_ref integer DEFAULT(0),
+            tarifs text DEFAULT('')
+        )
+    """)
+    
+    # Таблица QR_Keys
+    await cursor.execute("""
+        CREATE TABLE IF NOT EXISTS QR_Keys (
+            User_id bigint NOT NULL,
+            VPN_Key text NOT NULL,
+            Date text NOT NULL,
+            OS text NOT NULL,
+            isAdminKey integer NOT NULL DEFAULT(0),
+            ip_server text,
+            CountDaysBuy integer NOT NULL DEFAULT(30),
+            isActive bool DEFAULT(1),
+            isChangeProtocol bool NOT NULL DEFAULT(0),
+            DateChangeProtocol date,
+            Payment_id text NOT NULL DEFAULT(''),
+            isPremium bool NOT NULL DEFAULT(0),
+            Protocol text DEFAULT('vless'),
+            Keys_Data text,
+            Podpiska integer DEFAULT(-1),
+            date_time datetime,
+            summ integer DEFAULT(0),
+            FOREIGN KEY (User_id) REFERENCES Users (User_id)
+        )
+    """)
+    
+    # Таблица Servers
+    await cursor.execute("""
+        CREATE TABLE IF NOT EXISTS Servers (
+            ip text PRIMARY KEY,
+            password text,
+            count_keys integer DEFAULT(240),
+            api_url text,
+            cert_sha256 text,
+            Location text,
+            isPremium bool DEFAULT(0),
+            is_marzban bool DEFAULT(0),
+            is_pptp bool DEFAULT(0)
+        )
+    """)
+    
+    # Таблица Wallets
+    await cursor.execute("""
+        CREATE TABLE IF NOT EXISTS Wallets (
+            id integer PRIMARY KEY AUTOINCREMENT,
+            isActive bool DEFAULT(1),
+            Name text NOT NULL,
+            API_Key_TOKEN text,
+            ShopID_CLIENT_ID text,
+            E_mail_URL text
+        )
+    """)
+    
+    # Таблица Otchet
+    await cursor.execute("""
+        CREATE TABLE IF NOT EXISTS Otchet (
+            id integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+            date text NOT NULL,
+            prodleny integer NOT NULL DEFAULT(0),
+            off_key integer NOT NULL DEFAULT(0),
+            up_days integer NOT NULL DEFAULT(0),
+            change_protocol integer NOT NULL DEFAULT(0),
+            change_locations integer NOT NULL DEFAULT(0),
+            get_test_keys integer NOT NULL DEFAULT(0),
+            get_new_keys integer NOT NULL DEFAULT(0),
+            pay_donat integer NOT NULL DEFAULT(0),
+            pay_change_protocol integer NOT NULL DEFAULT(0),
+            pay_change_locations integer NOT NULL DEFAULT(0),
+            get_obesh integer NOT NULL DEFAULT(0),
+            call_donat integer NOT NULL DEFAULT(0),
+            opros_super integer NOT NULL DEFAULT(0),
+            opros_dop integer NOT NULL DEFAULT(0)
+        )
+    """)
+    
+    # Таблица Messages для логов
+    await cursor.execute("""
+        CREATE TABLE IF NOT EXISTS messages (
+            id integer PRIMARY KEY,
+            date text,
+            isBot bool NOT NULL DEFAULT(0),
+            chat_id integer NOT NULL DEFAULT(-1),
+            message_text text NOT NULL DEFAULT('---')
+        )
+    """)
+    
+    await conn.commit()
+    await conn.close()
+    print("База данных создана:", db_path)
+
+if __name__ == '__main__':
+    asyncio.run(create_db())
+EOF
+    
+    deactivate
+    cd - > /dev/null
+    log_success "База данных создана"
+}
+
+# =============================================================================
 # Настройка cron задач
 # =============================================================================
 setup_cron() {
@@ -707,6 +852,7 @@ main() {
     install_python_deps
     install_xui
     create_env
+    create_database      # Создание базы данных
     create_service
     setup_firewall
     setup_cron
