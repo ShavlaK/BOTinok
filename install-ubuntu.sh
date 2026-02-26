@@ -61,6 +61,27 @@ check_root() {
 }
 
 # =============================================================================
+# Очистка apt lock файлов
+# =============================================================================
+cleanup_apt() {
+    log "Очистка apt lock файлов..."
+    
+    # Убиваем процессы apt
+    killall -9 apt-get apt 2>/dev/null || true
+    sleep 2
+    
+    # Удаляем lock файлы
+    rm -f /var/lib/dpkg/lock-frontend
+    rm -f /var/lib/dpkg/lock
+    rm -f /var/cache/apt/archives/lock
+    
+    # Восстанавливаем dpkg
+    dpkg --configure -a 2>/dev/null || true
+    
+    log_success "apt очищен"
+}
+
+# =============================================================================
 # Проверка Ubuntu версии
 # =============================================================================
 check_ubuntu_version() {
@@ -612,6 +633,7 @@ print_summary() {
 main() {
     show_banner
     check_root
+    cleanup_apt          # Очистка apt lock
     check_ubuntu_version
     check_server
     update_system
