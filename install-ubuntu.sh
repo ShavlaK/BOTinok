@@ -179,6 +179,9 @@ download_bot_files() {
     curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/data/markup.py -o data/markup.py
     curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/data/markup_inline.py -o data/markup_inline.py
     
+    # Скачиваем утилиты (обязательно!)
+    curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/data/whitelist_utils.py -o data/whitelist_utils.py
+    
     # Скачиваем медиафайлы
     curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/data/LOGO.png -o data/LOGO.png 2>/dev/null || true
     curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/data/download.jpg -o data/download.jpg 2>/dev/null || true
@@ -579,13 +582,32 @@ EOF
 start_bot() {
     log "Запуск бота..."
     systemctl start $BOT_SERVICE_NAME
-    sleep 3
+    sleep 5
     
     if systemctl is-active --quiet $BOT_SERVICE_NAME; then
         log_success "Бот успешно запущен"
+        return 0
     else
         log_error "Не удалось запустить бота"
-        log "Проверьте логи: journalctl -u bot -f"
+        log "Получение информации об ошибке..."
+        
+        # Получаем последние логи
+        ERROR_LOG=$(journalctl -u bot -n 20 --no-pager 2>/dev/null | tail -10)
+        
+        if [[ "$ERROR_LOG" == *"ModuleNotFoundError"* ]]; then
+            log_error "Отсутствуют модули Python!"
+            log "Попробуйте: cd $INSTALL_DIR && source venv/bin/activate && pip install -r requirements.txt"
+        elif [[ "$ERROR_LOG" == *"TOKEN_MAIN"* ]]; then
+            log_error "Не указан токен бота в .env!"
+            log "Отредактируйте: nano $INSTALL_DIR/.env"
+        elif [[ "$ERROR_LOG" == *"MY_ID_TELEG"* ]]; then
+            log_error "Не указан ID администратора в .env!"
+            log "Отредактируйте: nano $INSTALL_DIR/.env"
+        fi
+        
+        log "Последние логи:"
+        echo "$ERROR_LOG"
+        return 1
     fi
 }
 
