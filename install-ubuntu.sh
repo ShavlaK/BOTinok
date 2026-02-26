@@ -184,18 +184,11 @@ install_dependencies() {
         cron \
         supervisor
     
-    # Добавляем репозиторий для Python 3.11 (опционально, но рекомендуется)
-    log "Добавление репозитория Deadsnakes для Python 3.11..."
-    add-apt-repository -y ppa:deadsnakes/ppa
-    
-    # Обновляем после добавления репозитория
-    apt-get update -y
-    
-    # Устанавливаем Python 3.11
-    log "Установка Python 3.11..."
-    apt-get install -y python3.11 python3.11-venv python3.11-dev
-    
     log_success "Зависимости установлены"
+    
+    # Проверяем версию Python
+    PYTHON_VERSION=$(python3 --version 2>&1 | awk '{print $2}')
+    log "Python $PYTHON_VERSION доступен"
 }
 
 # =============================================================================
@@ -232,15 +225,12 @@ install_python_deps() {
     # Создаём виртуальное окружение если нет
     if [ ! -d "$INSTALL_DIR/venv" ]; then
         log "Создание виртуального окружения Python..."
+
+        # Используем системный Python 3
+        python3 -m venv venv
         
-        # Используем Python 3.11 если доступен, иначе 3.8
-        if command -v python3.11 &> /dev/null; then
-            python3.11 -m venv venv
-            log_success "Виртуальное окружение создано (Python 3.11)"
-        else
-            python3 -m venv venv
-            log_success "Виртуальное окружение создано (Python 3.8)"
-        fi
+        PYTHON_VER=$(python3 --version 2>&1 | awk '{print $2}')
+        log_success "Виртуальное окружение создано (Python $PYTHON_VER)"
     fi
 
     # Активируем venv
