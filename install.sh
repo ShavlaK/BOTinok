@@ -184,12 +184,19 @@ install_python_deps() {
         
         # Пробуем установить pip
         if command -v python3.11 &> /dev/null; then
-            # Для Python 3.11
-            curl -sS https://bootstrap.pypa.io/get-pip.py | python3.11
+            # Для Python 3.11 - используем get-pip.py
+            log "Загрузка get-pip.py..."
+            curl -sS https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py
+            
+            # Устанавливаем с флагом --break-system-packages (нужно для Debian 12+)
+            python3.11 /tmp/get-pip.py --break-system-packages
+            
             ln -sf /usr/local/bin/pip3 /usr/bin/pip3 2>/dev/null || true
+            ln -sf /usr/local/bin/pip /usr/bin/pip 2>/dev/null || true
+            rm -f /tmp/get-pip.py
         else
             # Для системы
-            apt-get install -y python3-pip python3-venv
+            apt-get install -y python3-pip python3-venv python3-full
             ln -sf /usr/bin/pip3 /usr/bin/pip 2>/dev/null || true
         fi
     fi
@@ -201,11 +208,11 @@ install_python_deps() {
         log "Установка зависимостей из requirements.txt..."
         
         if command -v python3.11 &> /dev/null; then
-            python3.11 -m pip install --upgrade pip
-            python3.11 -m pip install -r $INSTALL_DIR/requirements.txt
+            python3.11 -m pip install --upgrade pip --break-system-packages
+            python3.11 -m pip install -r $INSTALL_DIR/requirements.txt --break-system-packages
         else
-            pip3 install --upgrade pip
-            pip3 install -r $INSTALL_DIR/requirements.txt
+            pip3 install --upgrade pip --break-system-packages
+            pip3 install -r $INSTALL_DIR/requirements.txt --break-system-packages
         fi
         
         log_success "Зависимости установлены"
