@@ -1,20 +1,26 @@
 # BOTinok - Python Dependencies
 # Совместимо с Python 3.8 - 3.12
+# КРИТИЧНО: aiogram 2.x требует aiohttp <3.9.0
+# numpy и pandas устанавливаются ОТДЕЛЬНО перед этим файлом!
+
+# Build dependencies
+setuptools>=65.0.0
+wheel>=0.40.0
 
 # Telegram Bot Framework
 aiogram==2.25.1
-aiohttp==3.9.1
+aiohttp>=3.8.0,<3.9.0
 
 # Database
 aiosqlite==0.19.0
 
-# SSH & Remote Access
+# SSH
 paramiko==3.4.0
 
-# VPN Libraries
+# VPN
 outline-vpn-api==3.0.0
 
-# Payment Systems
+# Payments
 yoomoney==0.1.0
 yookassa==3.2.0
 tinkoff-acquiring-api==0.1.3
@@ -25,20 +31,15 @@ freekassa-ru==0.0.7
 
 # Utilities
 qrcode==7.4.2
-Pillow==10.2.0
-path==16.9.0
-pandas==2.0.3
+Pillow>=10.0.0,<11.0.0
+path>=16.0.0,<17.0.0
 plotly==5.18.0
-numpy==1.24.4
 pyyaml==6.0.1
 requests==2.31.0
 
-# Web Server (for redirects)
+# Web
 flask==3.0.0
 flask-httpauth==4.8.0
 
-# Cryptography
+# Crypto
 pydantic==2.5.3
-
-# Additional dependencies (ОБЯЗАТЕЛЬНО!)
-setuptools>=65.0.0

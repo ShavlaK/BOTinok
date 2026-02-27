@@ -231,27 +231,38 @@ EOF
 install_python_deps() {
     log "Установка Python зависимостей..."
     cd $INSTALL_DIR
-    
+
     if [ ! -d "$INSTALL_DIR/venv" ]; then
         log "Создание виртуального окружения Python..."
         python3 -m venv venv
         PYTHON_VER=$(python3 --version 2>&1 | awk '{print $2}')
         log_success "Виртуальное окружение создано (Python $PYTHON_VER)"
     fi
-    
+
     source $INSTALL_DIR/venv/bin/activate
-    log "Обновление pip..."
-    python -m pip install --upgrade pip --quiet
     
+    # Обновляем pip
+    log "Обновление pip..."
+    python -m pip install --upgrade pip -q
+    
+    # Устанавливаем build dependencies ПЕРВЫМИ
+    log "Установка setuptools и wheel..."
+    pip install setuptools wheel -q
+    
+    # Устанавливаем core packages с готовыми колёсами (до requirements.txt!)
+    log "Установка numpy, pandas и других пакетов..."
+    pip install numpy pandas qrcode Pillow plotly pyyaml requests flask flask-httpauth pydantic -q
+    
+    # Устанавливаем остальные зависимости из requirements.txt
     if [ -f "$INSTALL_DIR/requirements.txt" ]; then
         log "Установка зависимостей из requirements.txt..."
-        pip install -r $INSTALL_DIR/requirements.txt --quiet
+        pip install -r $INSTALL_DIR/requirements.txt -q
         log_success "Зависимости установлены"
     else
         log_error "requirements.txt не найден!"
         return 1
     fi
-    
+
     deactivate 2>/dev/null || true
     cd - > /dev/null
 }
