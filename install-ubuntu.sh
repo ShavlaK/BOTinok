@@ -13,9 +13,9 @@ set -e
 # =============================================================================
 # Конфигурация
 # =============================================================================
-VERSION="3.0.0"
+VERSION="3.0.1"
 PROJECT_NAME="BOTinok"
-INSTALL_DIR="/root/$PROJECT_NAME"
+INSTALL_DIR="/opt/$PROJECT_NAME"
 BOT_SERVICE_NAME="bot"
 
 # Цвета
@@ -275,50 +275,50 @@ create_env() {
     read -p "🏷️ Название бота: " USER_BOT_NAME
     [ -z "$USER_BOT_NAME" ] && USER_BOT_NAME="BOTinok"
     
-    # Создаём .env файл
+    # Создаём .env файл (только ASCII!)
     cat > $INSTALL_DIR/.env << EOF
 # BOTinok Configuration
-# Сгенерировано: $(date '+%Y-%m-%d %H:%M:%S')
+# Generated: $(date '+%Y-%m-%d %H:%M:%S')
 
 TOKEN_MAIN='$USER_TOKEN'
 MY_ID_TELEG=$USER_ID
 NICK_HELP='$USER_NICK'
-NAME_AUTHOR_BOT='Александр'
+NAME_AUTHOR_BOT='Aleksandr'
 NAME_BOT_CONFIG='$USER_BOT_NAME'
 X3_UI_PORT_PANEL=62050
 
-# Протоколы
+# Protocols
 PR_VLESS=True
 PR_OUTLINE=False
 PR_WIREGUARD=False
 PR_PPTP=False
 
-# Функции
+# Features
 TEST_KEY=True
 REF_SYSTEM=True
 OPLATA=True
 DONATE_SYSTEM=True
 OBESH_PLATEZH=True
 
-# Тарифы
+# Tariffs
 TARIF_1=149
 TARIF_3=379
 TARIF_6=749
 TARIF_12=1349
 
-# Реферальная система
+# Referral system
 COUNT_DAYS_TRIAL=2
 COUNT_DAYS_REF=7
 PARTNER_P=30
 SUMM_VIVOD=200
 
-# Дополнительно
+# Additional
 KURS_RUB=94
 KURS_XTR=2
-LANG_DEFAULT='Русский'
+LANG_DEFAULT='Russian'
 EOF
 
-    log_success "Файл .env создан и заполнен!"
+    log_success "Файл .env создан!"
 }
 
 # =============================================================================
