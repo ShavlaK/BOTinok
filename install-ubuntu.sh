@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # =============================================================================
-# BOTinok - Автоматическая установка для Ubuntu Server 20.04 LTS
+# BOTinok - Автоматическая установка Telegram бота
 # =============================================================================
-# Версия: 2.1.0
-# Описание: Скрипт для автоматической установки BOTinok на Ubuntu 20.04
+# Версия: 3.0.0
+# Описание: Установка ТОЛЬКО бота. 3X-UI устанавливается через бота (/add_server)
 # Требования: Ubuntu Server 20.04 LTS, 2GB RAM, 10GB disk
 # =============================================================================
 
@@ -13,18 +13,16 @@ set -e
 # =============================================================================
 # Конфигурация
 # =============================================================================
-VERSION="2.1.0-UBUNTU"
+VERSION="3.0.0"
 PROJECT_NAME="BOTinok"
 INSTALL_DIR="/root/$PROJECT_NAME"
 BOT_SERVICE_NAME="bot"
-PYTHON_VERSION="3.8"
 
 # Цвета
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
-CYAN='\033[0;36m'
 NC='\033[0m'
 
 # Логирование
@@ -38,7 +36,7 @@ show_banner() {
     echo ""
     echo "+======================================================+"
     echo "|                                                      |"
-    echo "|     BOTinok - Установка для Ubuntu 20.04 LTS         |"
+    echo "|     🤖 BOTinok - Установка Telegram бота             |"
     echo "|                                                      |"
     echo "|  Версия: $VERSION                                    |"
     echo "|  GitHub: https://github.com/ShavlaK/BOTinok          |"
@@ -60,30 +58,24 @@ check_root() {
 }
 
 # =============================================================================
-# Очистка apt lock файлов
+# Очистка apt lock
 # =============================================================================
 cleanup_apt() {
     log "Очистка apt lock файлов..."
     killall -9 apt-get apt 2>/dev/null || true
     sleep 2
-    rm -f /var/lib/dpkg/lock-frontend
-    rm -f /var/lib/dpkg/lock
-    rm -f /var/cache/apt/archives/lock
+    rm -f /var/lib/dpkg/lock-frontend /var/lib/dpkg/lock /var/cache/apt/archives/lock
     dpkg --configure -a 2>/dev/null || true
     log_success "apt очищен"
 }
 
 # =============================================================================
-# Проверка версии Ubuntu
+# Проверка Ubuntu
 # =============================================================================
-check_ubuntu_version() {
+check_ubuntu() {
     log "Проверка версии Ubuntu..."
     if [ -f /etc/os-release ]; then
         source /etc/os-release
-        if [[ "$ID" != "ubuntu" ]]; then
-            log_warning "Скрипт предназначен для Ubuntu, но обнаружена: $ID"
-            log_warning "Продолжаем установку..."
-        fi
         log_success "Ubuntu $VERSION_ID ($ID)"
     else
         log_error "Не удалось определить версию ОС"
@@ -92,7 +84,7 @@ check_ubuntu_version() {
 }
 
 # =============================================================================
-# Проверка мощностей сервера
+# Проверка мощностей
 # =============================================================================
 check_server() {
     log "Проверка мощностей сервера..."
@@ -121,7 +113,6 @@ update_system() {
     log "Обновление системы..."
     apt-get update -y || { log_error "Не удалось обновить списки пакетов"; exit 1; }
     DEBIAN_FRONTEND=noninteractive apt-get upgrade -y || log_warning "Некоторые пакеты не обновились"
-    apt-get install -y software-properties-common apt-transport-https ca-certificates || log_warning "Некоторые пакеты не установились"
     log_success "Система обновлена"
 }
 
@@ -132,22 +123,19 @@ install_dependencies() {
     log "Установка зависимостей..."
     
     apt-get install -y \
-        curl wget git nano htop net-tools unzip zip jq \
-        build-essential libnss3-dev zlib1g-dev libgdbm-dev libncurses5-dev \
-        libssl-dev libffi-dev libreadline-dev libsqlite3-dev libbz2-dev liblzma-dev \
+        curl wget git nano htop \
+        build-essential libssl-dev libffi-dev \
         python3 python3-venv python3-dev python3-pip \
-        socat ufw cron supervisor || {
+        ufw cron || {
         log_error "Не удалось установить зависимости"
         exit 1
     }
     
     log_success "Зависимости установлены"
-    PYTHON_VER=$(python3 --version 2>&1 | awk '{print $2}')
-    log "Python $PYTHON_VER доступен"
 }
 
 # =============================================================================
-# Создание директории проекта
+# Создание директории
 # =============================================================================
 create_project_dir() {
     log "Создание директории проекта..."
@@ -166,29 +154,25 @@ download_bot_files() {
     cd $INSTALL_DIR
     
     # Скачиваем основные файлы
-    log "Загрузка bot.py..."
     curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/bot.py -o bot.py || {
         log_error "Не удалось загрузить bot.py"
         exit 1
     }
     
-    log "Загрузка requirements.txt..."
     curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/requirements.txt -o requirements.txt || {
         log_error "Не удалось загрузить requirements.txt"
         exit 1
     }
     
     # Скачиваем файлы конфигурации
-    log "Загрузка файлов конфигурации..."
+    mkdir -p data
     curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/data/config.py -o data/config.py || true
     curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/data/lang.yml -o data/lang.yml || true
     curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/data/markup.py -o data/markup.py || true
     curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/data/markup_inline.py -o data/markup_inline.py || true
-    
-    # Скачиваем утилиты
     curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/data/whitelist_utils.py -o data/whitelist_utils.py || true
     
-    # Скачиваем медиафайлы
+    # Медиафайлы
     curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/data/LOGO.png -o data/LOGO.png 2>/dev/null || true
     curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/data/download.jpg -o data/download.jpg 2>/dev/null || true
     curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/data/upload.jpg -o data/upload.jpg 2>/dev/null || true
@@ -204,33 +188,24 @@ install_python_deps() {
     log "Установка Python зависимостей..."
     cd $INSTALL_DIR
 
+    # Создаём venv
     if [ ! -d "$INSTALL_DIR/venv" ]; then
         log "Создание виртуального окружения Python..."
         python3 -m venv venv || { log_error "Не удалось создать venv"; exit 1; }
-        PYTHON_VER=$(python3 --version 2>&1 | awk '{print $2}')
-        log_success "Виртуальное окружение создано (Python $PYTHON_VER)"
+        log_success "Виртуальное окружение создано"
     fi
 
     source $INSTALL_DIR/venv/bin/activate
     
     # Обновляем pip
-    log "Обновление pip..."
     python -m pip install --upgrade pip -q || log_warning "Не удалось обновить pip"
     
-    # Устанавливаем build dependencies ПЕРВЫМИ
-    log "Установка setuptools и wheel..."
+    # Устанавливаем setuptools
     pip install setuptools wheel -q || { log_error "Не удалось установить setuptools"; exit 1; }
     
-    # Устанавливаем core packages с готовыми колёсами (до requirements.txt!)
-    # Используем --only-binary для установки только бинарных пакетов
-    log "Установка numpy, pandas и других пакетов..."
-    pip install --only-binary :all: numpy pandas qrcode Pillow plotly pyyaml requests flask flask-httpauth pydantic -q 2>/dev/null || \
-    pip install numpy pandas qrcode Pillow plotly pyyaml requests flask flask-httpauth pydantic -q || log_warning "Некоторые пакеты не установились"
-    
-    # Устанавливаем остальные зависимости из requirements.txt
+    # Устанавливаем зависимости
     if [ -f "$INSTALL_DIR/requirements.txt" ]; then
         log "Установка зависимостей из requirements.txt..."
-        pip install --only-binary :all: -r $INSTALL_DIR/requirements.txt -q 2>/dev/null || \
         pip install -r $INSTALL_DIR/requirements.txt -q || {
             log_error "Не удалось установить зависимости"
             exit 1
@@ -261,10 +236,9 @@ create_env() {
     echo ""
     echo "1️⃣  Токен бота Telegram"
     echo "   📌 Получить: @BotFather → /newbot или /mybots"
-    echo "   📌 Пример: 1234567890:ABCdefGHIjklMNOpqrsTUVwxyz"
     echo ""
     
-    # Запрашиваем токен с проверкой
+    # Запрашиваем токен
     while true; do
         read -p "🔑 Введите токен бота: " USER_TOKEN
         if [[ "$USER_TOKEN" == *":"* ]] && [ ${#USER_TOKEN} -ge 40 ]; then
@@ -272,17 +246,15 @@ create_env() {
             break
         else
             log_error "Неверный формат токена! Попробуйте ещё раз."
-            log_info "Пример: 1234567890:ABCdefGHIjklMNOpqrsTUVwxyz"
         fi
     done
     
     echo ""
     echo "2️⃣  ID Telegram администратора"
-    echo "   📌 Узнать: @userinfobot (просто отправьте боту сообщение)"
-    echo "   📌 Пример: 123456789"
+    echo "   📌 Узнать: @userinfobot"
     echo ""
     
-    # Запрашиваем ID с проверкой
+    # Запрашиваем ID
     while true; do
         read -p "🔑 Введите ваш Telegram ID: " USER_ID
         if [[ "$USER_ID" =~ ^[0-9]+$ ]]; then
@@ -295,103 +267,55 @@ create_env() {
     
     echo ""
     echo "3️⃣  Никнейм для поддержки (без @)"
-    echo "   📌 Пример: codenlx"
-    echo ""
-    
     read -p "👤 Ник поддержки: " USER_NICK
     [ -z "$USER_NICK" ] && USER_NICK="codenlx"
     
     echo ""
     echo "4️⃣  Название бота"
-    echo "   📌 Только буквы и цифры"
-    echo "   📌 Пример: BOTinok"
-    echo ""
-    
     read -p "🏷️ Название бота: " USER_BOT_NAME
     [ -z "$USER_BOT_NAME" ] && USER_BOT_NAME="BOTinok"
     
-    # Получаем порт 3X-UI если установлен
-    XUI_PORT="${XUI_PORT:-62050}"
-    
     # Создаём .env файл
     cat > $INSTALL_DIR/.env << EOF
-# ═══════════════════════════════════════════════════════════════════════════
-# BOTinok Configuration - Автоматически сгенерированный файл
-# GitHub: https://github.com/ShavlaK/BOTinok
-# Ubuntu Server 20.04 LTS
+# BOTinok Configuration
 # Сгенерировано: $(date '+%Y-%m-%d %H:%M:%S')
-# ═══════════════════════════════════════════════════════════════════════════
-
-# -----------------------------------------------------------------------------
-# 🔴 ОБЯЗАТЕЛЬНЫЕ ПАРАМЕТРЫ (заполнено автоматически)
-# -----------------------------------------------------------------------------
 
 TOKEN_MAIN='$USER_TOKEN'
 MY_ID_TELEG=$USER_ID
-
-# -----------------------------------------------------------------------------
-# ⚙️ ОСНОВНЫЕ НАСТРОЙКИ
-# -----------------------------------------------------------------------------
-
 NICK_HELP='$USER_NICK'
 NAME_AUTHOR_BOT='Александр'
 NAME_BOT_CONFIG='$USER_BOT_NAME'
-X3_UI_PORT_PANEL=$XUI_PORT
+X3_UI_PORT_PANEL=62050
 
-# -----------------------------------------------------------------------------
-# 🔒 ПРОТОКОЛЫ
-# -----------------------------------------------------------------------------
-
+# Протоколы
 PR_VLESS=True
 PR_OUTLINE=False
 PR_WIREGUARD=False
 PR_PPTP=False
 
-# -----------------------------------------------------------------------------
-# 🎯 ФУНКЦИИ
-# -----------------------------------------------------------------------------
-
+# Функции
 TEST_KEY=True
 REF_SYSTEM=True
-REF_SYSTEM_AFTER_PAY=False
 OPLATA=True
 DONATE_SYSTEM=True
-WHY_BOT_PAY=True
 OBESH_PLATEZH=True
-SEND_QR=False
-INLINE_MODE=False
-IS_OTCHET=False
 
-# -----------------------------------------------------------------------------
-# 💰 ТАРИФЫ
-# -----------------------------------------------------------------------------
-
+# Тарифы
 TARIF_1=149
 TARIF_3=379
 TARIF_6=749
 TARIF_12=1349
 
-# -----------------------------------------------------------------------------
-# 👥 РЕФЕРАЛЬНАЯ СИСТЕМА
-# -----------------------------------------------------------------------------
-
+# Реферальная система
 COUNT_DAYS_TRIAL=2
 COUNT_DAYS_REF=7
 PARTNER_P=30
 SUMM_VIVOD=200
 
-# -----------------------------------------------------------------------------
-# 🌍 ДОПОЛНИТЕЛЬНО
-# -----------------------------------------------------------------------------
-
+# Дополнительно
 KURS_RUB=94
 KURS_XTR=2
 LANG_DEFAULT='Русский'
-
-# ═══════════════════════════════════════════════════════════════════════════
-# 📚 Документация: https://github.com/ShavlaK/BOTinok#readme
-# 🆘 Поддержка: https://github.com/ShavlaK/BOTinok/issues
-# ═══════════════════════════════════════════════════════════════════════════
 EOF
 
     log_success "Файл .env создан и заполнен!"
@@ -421,77 +345,56 @@ async def create_db():
     conn = await connect(db_path)
     cursor = await conn.cursor()
     
-    # Таблица Users
+    # Users
     await cursor.execute("""
         CREATE TABLE IF NOT EXISTS Users (
             User_id bigint PRIMARY KEY NOT NULL,
-            First_Name text NOT NULL DEFAULT('Имя не указано'),
-            Last_Name text,
-            Nick text NOT NULL DEFAULT('Ник'),
-            Selected_id_Ustr integer NOT NULL DEFAULT(2),
-            id_Otkuda integer NOT NULL DEFAULT(0),
-            get_test_key bool NOT NULL DEFAULT(0),
-            days_by_buy integer NOT NULL DEFAULT(30),
-            Summ integer NOT NULL DEFAULT(0),
-            Date date,
-            Promo text NOT NULL DEFAULT(''),
-            Date_reg date,
-            isBan bool NOT NULL DEFAULT(0),
-            isPayChangeProtocol bool NOT NULL DEFAULT(0),
+            First_Name text, Last_Name text, Nick text,
+            Selected_id_Ustr integer DEFAULT(2),
+            id_Otkuda integer DEFAULT(0),
+            get_test_key bool DEFAULT(0),
+            days_by_buy integer DEFAULT(30),
+            Summ integer DEFAULT(0),
+            Date date, Promo text, Date_reg date,
+            isBan bool DEFAULT(0),
+            isPayChangeProtocol bool DEFAULT(0),
             datePayChangeLocations date,
-            Lang text DEFAULT('Русский'),
-            id_ref integer DEFAULT(0),
-            tarifs text DEFAULT('')
+            Lang text, id_ref integer, tarifs text
         )
     """)
     
-    # Таблица QR_Keys
+    # QR_Keys
     await cursor.execute("""
         CREATE TABLE IF NOT EXISTS QR_Keys (
-            User_id bigint NOT NULL,
-            VPN_Key text NOT NULL,
-            Date text NOT NULL,
-            OS text NOT NULL,
-            isAdminKey integer NOT NULL DEFAULT(0),
-            ip_server text,
-            CountDaysBuy integer NOT NULL DEFAULT(30),
-            isActive bool DEFAULT(1),
-            isChangeProtocol bool NOT NULL DEFAULT(0),
-            DateChangeProtocol date,
-            Payment_id text NOT NULL DEFAULT(''),
-            isPremium bool NOT NULL DEFAULT(0),
-            Protocol text DEFAULT('vless'),
-            Keys_Data text,
-            Podpiska integer DEFAULT(-1),
-            date_time datetime,
-            summ integer DEFAULT(0),
-            FOREIGN KEY (User_id) REFERENCES Users (User_id)
+            User_id bigint, VPN_Key text, Date text, OS text,
+            isAdminKey integer DEFAULT(0), ip_server text,
+            CountDaysBuy integer DEFAULT(30), isActive bool DEFAULT(1),
+            isChangeProtocol bool DEFAULT(0), DateChangeProtocol date,
+            Payment_id text, isPremium bool DEFAULT(0),
+            Protocol text, Keys_Data text, Podpiska integer,
+            date_time datetime, summ integer
         )
     """)
     
-    # Таблица Servers
+    # Servers
     await cursor.execute("""
         CREATE TABLE IF NOT EXISTS Servers (
-            ip text PRIMARY KEY,
-            password text,
+            ip text PRIMARY KEY, password text,
             count_keys integer DEFAULT(240),
-            api_url text,
-            cert_sha256 text,
-            Location text,
-            isPremium bool DEFAULT(0),
-            is_marzban bool DEFAULT(0),
+            api_url text, cert_sha256 text, Location text,
+            isPremium bool DEFAULT(0), is_marzban bool DEFAULT(0),
             is_pptp bool DEFAULT(0)
         )
     """)
     
     await conn.commit()
     await conn.close()
-    print("База данных создана: data/db.db")
+    print("✅ База данных создана")
 
 asyncio.run(create_db())
 PYEOF
     
-    deactivate 2>/dev/null || true
+    deactivate
     cd - > /dev/null
     log_success "База данных создана"
 }
@@ -506,81 +409,24 @@ create_service() {
 [Unit]
 Description=BOTinok - Telegram VPN Bot
 After=network.target
-Wants=network-online.target
 
 [Service]
 Type=simple
 User=root
 WorkingDirectory=/root/BOTinok
-
 Environment=PATH=/root/BOTinok/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 Environment=PYTHONUNBUFFERED=1
-Environment=PYTHONIOENCODING=utf-8
-
 ExecStart=/root/BOTinok/venv/bin/python /root/BOTinok/bot.py
 Restart=always
 RestartSec=10
-RestartPreventExitStatus=1
-
-StandardOutput=journal
-StandardError=journal
-SyslogIdentifier=botinok
-
-LimitNOFILE=65535
-Nice=-5
-NoNewPrivileges=false
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
-    systemctl daemon-reload || { log_error "Не удалось обновить systemd"; exit 1; }
-    systemctl enable $BOT_SERVICE_NAME || log_warning "Не удалось включить сервис"
+    systemctl daemon-reload
+    systemctl enable $BOT_SERVICE_NAME
     log_success "Systemd сервис создан"
-}
-
-# =============================================================================
-# Настройка брандмауэра
-# =============================================================================
-setup_firewall() {
-    log "Настройка брандмауэра UFW..."
-
-    if ! command -v ufw &> /dev/null; then
-        apt-get install -y ufw || log_warning "Не удалось установить ufw"
-    fi
-
-    ufw allow 22/tcp || true
-    ufw allow 80/tcp || true
-    ufw allow 443/tcp || true
-
-    if [ ! -z "$XUI_PORT" ]; then
-        ufw allow $XUI_PORT/tcp || true
-    fi
-
-    echo "y" | ufw enable 2>/dev/null || log_warning "Не удалось включить брандмауэр"
-    log_success "Брандмауэр настроен"
-}
-
-# =============================================================================
-# Настройка cron задач
-# =============================================================================
-setup_cron() {
-    log "Настройка cron задач..."
-    
-    cat > $INSTALL_DIR/backup.sh << 'EOF'
-#!/bin/bash
-BACKUP_DIR="/root/backups"
-DATE=$(date +%Y%m%d_%H%M%S)
-mkdir -p $BACKUP_DIR
-cp /root/BOTinok/data/*.db $BACKUP_DIR/db_backup_$DATE.tar.gz 2>/dev/null || true
-tar -czf $BACKUP_DIR/config_backup_$DATE.tar.gz /root/BOTinok/.env /root/BOTinok/data/config.py
-find $BACKUP_DIR -name "*.tar.gz" -mtime +7 -delete
-echo "Backup completed: $DATE"
-EOF
-    
-    chmod +x $INSTALL_DIR/backup.sh
-    (crontab -l 2>/dev/null; echo "0 3 * * * $INSTALL_DIR/backup.sh") | crontab - || log_warning "Не удалось настроить cron"
-    log_success "Cron задачи настроены"
 }
 
 # =============================================================================
@@ -588,16 +434,14 @@ EOF
 # =============================================================================
 start_bot() {
     log "Запуск бота..."
-    systemctl start $BOT_SERVICE_NAME || { log_error "Не удалось запустить бота"; return 1; }
-    sleep 5
+    systemctl start $BOT_SERVICE_NAME
+    sleep 3
     
     if systemctl is-active --quiet $BOT_SERVICE_NAME; then
         log_success "Бот успешно запущен"
-        return 0
     else
         log_error "Не удалось запустить бота"
         log "Проверьте логи: journalctl -u bot -f"
-        return 1
     fi
 }
 
@@ -605,63 +449,40 @@ start_bot() {
 # Вывод итогов
 # =============================================================================
 print_summary() {
-    EXTERNAL_IP=$(curl -s ifconfig.me 2>/dev/null || echo "unknown")
-    
     echo ""
     echo "╔═══════════════════════════════════════════════════════╗"
-    echo "║                                                       ║"
     echo "║           ✅ УСТАНОВКА ЗАВЕРШЕНА!                     ║"
-    echo "║                                                       ║"
     echo "╚═══════════════════════════════════════════════════════╝"
     echo ""
     echo "📁 Директория: $INSTALL_DIR"
     echo ""
     echo "═══════════════════════════════════════════════════════"
-    echo "  ✅ СТАТУС УСТАНОВКИ"
+    echo "  ✅ ЧТО УСТАНОВЛЕНО"
     echo "═══════════════════════════════════════════════════════"
     echo ""
-    echo "✅ Файл .env создан и заполнен"
-    echo "✅ Виртуальное окружение Python создано"
-    echo "✅ Зависимости установлены"
-    echo "✅ База данных создана"
-    echo "✅ Systemd сервис создан"
-    echo "✅ Брандмауэр настроен"
+    echo "✅ Telegram бот"
+    echo "✅ Python зависимости"
+    echo "✅ База данных"
+    echo "✅ Systemd сервис"
     echo ""
-    
-    if systemctl is-active --quiet $BOT_SERVICE_NAME; then
-        echo "✅ Бот ЗАПУЩЕН и работает"
-    else
-        echo "⚠️  Бот требует перезапуска"
-        echo "   Выполните: systemctl restart bot"
-    fi
-    
+    echo "═══════════════════════════════════════════════════════"
+    echo "  📋 СЛЕДУЮЩИЕ ШАГИ"
+    echo "═══════════════════════════════════════════════════════"
+    echo ""
+    echo "1. Откройте @botinocheck1_bot в Telegram"
+    echo "2. Нажмите /start"
+    echo "3. Для добавления сервера с 3X-UI:"
+    echo "   /add_server ip password кол-во_ключей локация"
     echo ""
     echo "═══════════════════════════════════════════════════════"
     echo "  🔧 КОМАНДЫ УПРАВЛЕНИЯ"
     echo "═══════════════════════════════════════════════════════"
     echo ""
-    echo "   systemctl status bot      - Статус бота"
-    echo "   systemctl restart bot     - Перезапуск"
-    echo "   systemctl stop bot        - Остановка"
-    echo "   journalctl -u bot -f      - Логи"
+    echo "   systemctl status bot   - Статус"
+    echo "   systemctl restart bot  - Перезапуск"
+    echo "   journalctl -u bot -f   - Логи"
     echo ""
-    echo "═══════════════════════════════════════════════════════"
-    echo "  📚 ДОКУМЕНТАЦИЯ"
-    echo "═══════════════════════════════════════════════════════"
-    echo ""
-    echo "   GitHub:      https://github.com/ShavlaK/BOTinok"
-    echo "   Docs:        https://github.com/ShavlaK/BOTinok#readme"
-    echo "   Troubleshoot: https://github.com/ShavlaK/BOTinok/blob/main/TROUBLESHOOTING.md"
-    echo ""
-    echo "═══════════════════════════════════════════════════════"
-    echo ""
-    echo "💡 СЛЕДУЮЩИЕ ДЕЙСТВИЯ:"
-    echo ""
-    echo "1. Откройте @botinocheck1_bot в Telegram"
-    echo "2. Нажмите /start"
-    echo "3. Бот должен ответить!"
-    echo ""
-    echo "✅ Всё готово к использованию!"
+    echo "✅ Бот готов к работе!"
     echo ""
 }
 
@@ -672,7 +493,7 @@ main() {
     show_banner
     check_root
     cleanup_apt
-    check_ubuntu_version
+    check_ubuntu
     check_server
     update_system
     install_dependencies
@@ -682,11 +503,8 @@ main() {
     create_env
     create_database
     create_service
-    setup_firewall
-    setup_cron
     start_bot
     print_summary
 }
 
-# Запуск
 main "$@"
