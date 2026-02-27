@@ -250,12 +250,15 @@ install_python_deps() {
     pip install setuptools wheel -q
     
     # Устанавливаем core packages с готовыми колёсами (до requirements.txt!)
+    # Используем --only-binary :all: для установки только бинарных пакетов
     log "Установка numpy, pandas и других пакетов..."
+    pip install --only-binary :all: numpy pandas qrcode Pillow plotly pyyaml requests flask flask-httpauth pydantic -q 2>/dev/null || \
     pip install numpy pandas qrcode Pillow plotly pyyaml requests flask flask-httpauth pydantic -q
     
     # Устанавливаем остальные зависимости из requirements.txt
     if [ -f "$INSTALL_DIR/requirements.txt" ]; then
         log "Установка зависимостей из requirements.txt..."
+        pip install --only-binary :all: -r $INSTALL_DIR/requirements.txt -q 2>/dev/null || \
         pip install -r $INSTALL_DIR/requirements.txt -q
         log_success "Зависимости установлены"
     else
