@@ -3,8 +3,8 @@
 # =============================================================================
 # BOTinok - Автоматическая установка для Ubuntu Server 20.04 LTS
 # =============================================================================
-# Версия: 2.0.0
-# Описание: Полностью автоматическая установка BOTinok
+# Версия: 2.1.0
+# Описание: Скрипт для автоматической установки BOTinok на Ubuntu 20.04
 # Требования: Ubuntu Server 20.04 LTS, 2GB RAM, 10GB disk
 # =============================================================================
 
@@ -13,7 +13,7 @@ set -e
 # =============================================================================
 # Конфигурация
 # =============================================================================
-VERSION="2.0.0-UBUNTU"
+VERSION="2.1.0-UBUNTU"
 PROJECT_NAME="BOTinok"
 INSTALL_DIR="/root/$PROJECT_NAME"
 BOT_SERVICE_NAME="bot"
@@ -64,24 +64,17 @@ check_root() {
 # =============================================================================
 cleanup_apt() {
     log "Очистка apt lock файлов..."
-    
-    # Убиваем процессы apt
     killall -9 apt-get apt 2>/dev/null || true
     sleep 2
-    
-    # Удаляем lock файлы
     rm -f /var/lib/dpkg/lock-frontend
     rm -f /var/lib/dpkg/lock
     rm -f /var/cache/apt/archives/lock
-    
-    # Восстанавливаем dpkg
     dpkg --configure -a 2>/dev/null || true
-    
     log_success "apt очищен"
 }
 
 # =============================================================================
-# Проверка Ubuntu версии
+# Проверка версии Ubuntu
 # =============================================================================
 check_ubuntu_version() {
     log "Проверка версии Ubuntu..."
@@ -89,6 +82,7 @@ check_ubuntu_version() {
         source /etc/os-release
         if [[ "$ID" != "ubuntu" ]]; then
             log_warning "Скрипт предназначен для Ubuntu, но обнаружена: $ID"
+            log_warning "Продолжаем установку..."
         fi
         log_success "Ubuntu $VERSION_ID ($ID)"
     else
@@ -125,9 +119,9 @@ check_server() {
 # =============================================================================
 update_system() {
     log "Обновление системы..."
-    apt-get update -y
-    DEBIAN_FRONTEND=noninteractive apt-get upgrade -y
-    apt-get install -y software-properties-common apt-transport-https ca-certificates
+    apt-get update -y || { log_error "Не удалось обновить списки пакетов"; exit 1; }
+    DEBIAN_FRONTEND=noninteractive apt-get upgrade -y || log_warning "Некоторые пакеты не обновились"
+    apt-get install -y software-properties-common apt-transport-https ca-certificates || log_warning "Некоторые пакеты не установились"
     log_success "Система обновлена"
 }
 
@@ -142,7 +136,10 @@ install_dependencies() {
         build-essential libnss3-dev zlib1g-dev libgdbm-dev libncurses5-dev \
         libssl-dev libffi-dev libreadline-dev libsqlite3-dev libbz2-dev liblzma-dev \
         python3 python3-venv python3-dev python3-pip \
-        socat ufw cron supervisor
+        socat ufw cron supervisor || {
+        log_error "Не удалось установить зависимости"
+        exit 1
+    }
     
     log_success "Зависимости установлены"
     PYTHON_VER=$(python3 --version 2>&1 | awk '{print $2}')
@@ -167,60 +164,35 @@ create_project_dir() {
 download_bot_files() {
     log "Загрузка файлов бота из GitHub..."
     cd $INSTALL_DIR
-
+    
     # Скачиваем основные файлы
     log "Загрузка bot.py..."
-    curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/bot.py -o bot.py
+    curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/bot.py -o bot.py || {
+        log_error "Не удалось загрузить bot.py"
+        exit 1
+    }
     
     log "Загрузка requirements.txt..."
-    curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/requirements.txt -o requirements.txt
+    curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/requirements.txt -o requirements.txt || {
+        log_error "Не удалось загрузить requirements.txt"
+        exit 1
+    }
     
-    # Проверяем что requirements.txt скачался
-    if [ ! -f "requirements.txt" ] || [ ! -s "requirements.txt" ]; then
-        log_error "Не удалось загрузить requirements.txt!"
-        log "Создаю резервный файл..."
-        cat > requirements.txt << 'EOF'
-aiogram==2.25.1
-aiohttp==3.8.3
-aiosqlite==0.19.0
-paramiko==3.1.0
-outline-vpn-api==3.0.0
-yoomoney==0.1.0
-yookassa==3.0.0
-tinkoff-acquiring-api==0.1.3
-walletpay==1.3.1
-cryptomusapi==1.0.1
-aaioasync==0.1.9
-freekassa-ru==0.0.7
-qrcode==7.4.2
-Pillow==9.4.0
-path==16.6.0
-pandas==2.0.1
-plotly==5.14.1
-numpy==1.24.3
-pyyaml==6.0
-requests==2.31.0
-flask==2.3.1
-flask-httpauth==4.8.0
-pydantic==2.5.3
-EOF
-    fi
-
     # Скачиваем файлы конфигурации
     log "Загрузка файлов конфигурации..."
-    curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/data/config.py -o data/config.py
-    curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/data/lang.yml -o data/lang.yml
-    curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/data/markup.py -o data/markup.py
-    curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/data/markup_inline.py -o data/markup_inline.py
-
-    # Скачиваем утилиты (обязательно!)
-    curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/data/whitelist_utils.py -o data/whitelist_utils.py
-
+    curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/data/config.py -o data/config.py || true
+    curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/data/lang.yml -o data/lang.yml || true
+    curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/data/markup.py -o data/markup.py || true
+    curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/data/markup_inline.py -o data/markup_inline.py || true
+    
+    # Скачиваем утилиты
+    curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/data/whitelist_utils.py -o data/whitelist_utils.py || true
+    
     # Скачиваем медиафайлы
     curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/data/LOGO.png -o data/LOGO.png 2>/dev/null || true
     curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/data/download.jpg -o data/download.jpg 2>/dev/null || true
     curl -Ls https://raw.githubusercontent.com/ShavlaK/BOTinok/main/bot/data/upload.jpg -o data/upload.jpg 2>/dev/null || true
-
+    
     log_success "Файлы бота загружены"
     cd - > /dev/null
 }
@@ -234,7 +206,7 @@ install_python_deps() {
 
     if [ ! -d "$INSTALL_DIR/venv" ]; then
         log "Создание виртуального окружения Python..."
-        python3 -m venv venv
+        python3 -m venv venv || { log_error "Не удалось создать venv"; exit 1; }
         PYTHON_VER=$(python3 --version 2>&1 | awk '{print $2}')
         log_success "Виртуальное окружение создано (Python $PYTHON_VER)"
     fi
@@ -243,151 +215,34 @@ install_python_deps() {
     
     # Обновляем pip
     log "Обновление pip..."
-    python -m pip install --upgrade pip -q
+    python -m pip install --upgrade pip -q || log_warning "Не удалось обновить pip"
     
     # Устанавливаем build dependencies ПЕРВЫМИ
     log "Установка setuptools и wheel..."
-    pip install setuptools wheel -q
+    pip install setuptools wheel -q || { log_error "Не удалось установить setuptools"; exit 1; }
     
     # Устанавливаем core packages с готовыми колёсами (до requirements.txt!)
-    # Используем --only-binary :all: для установки только бинарных пакетов
+    # Используем --only-binary для установки только бинарных пакетов
     log "Установка numpy, pandas и других пакетов..."
     pip install --only-binary :all: numpy pandas qrcode Pillow plotly pyyaml requests flask flask-httpauth pydantic -q 2>/dev/null || \
-    pip install numpy pandas qrcode Pillow plotly pyyaml requests flask flask-httpauth pydantic -q
+    pip install numpy pandas qrcode Pillow plotly pyyaml requests flask flask-httpauth pydantic -q || log_warning "Некоторые пакеты не установились"
     
     # Устанавливаем остальные зависимости из requirements.txt
     if [ -f "$INSTALL_DIR/requirements.txt" ]; then
         log "Установка зависимостей из requirements.txt..."
         pip install --only-binary :all: -r $INSTALL_DIR/requirements.txt -q 2>/dev/null || \
-        pip install -r $INSTALL_DIR/requirements.txt -q
+        pip install -r $INSTALL_DIR/requirements.txt -q || {
+            log_error "Не удалось установить зависимости"
+            exit 1
+        }
         log_success "Зависимости установлены"
     else
         log_error "requirements.txt не найден!"
-        return 1
+        exit 1
     fi
 
     deactivate 2>/dev/null || true
     cd - > /dev/null
-}
-
-# =============================================================================
-# Установка 3X-UI панели
-# =============================================================================
-install_xui() {
-    log "Установка 3X-UI панели..."
-
-    if [ -f /usr/local/x-ui/x-ui ]; then
-        log_success "3X-UI уже установлена"
-        XUI_PORT=$(/usr/local/x-ui/x-ui setting -show 2>/dev/null | grep "Port" | awk '{print $2}')
-        return 0
-    fi
-
-    # Генерируем параметры
-    XUI_PORT=$((RANDOM % 10000 + 10000))
-    XUI_USERNAME="admin$(shuf -i 1000-9999 -n 1)"
-    XUI_PASSWORD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 16 | head -n 1)
-    XUI_BASE_PATH=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 15 | head -n 1)
-    
-    log "Генерация параметров..."
-    log "  Порт панели: $XUI_PORT"
-    log "  Пользователь: $XUI_USERNAME"
-    log "  Пароль: ******"
-    log "  Base Path: /$XUI_BASE_PATH"
-
-    # Скачиваем и устанавливаем 3X-UI
-    curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh > /tmp/x-ui-install.sh
-    chmod +x /tmp/x-ui-install.sh
-    
-    export XUI_PANEL_PORT=$XUI_PORT
-    export XUI_PANEL_USERNAME=$XUI_USERNAME
-    export XUI_PANEL_PASSWORD=$XUI_PASSWORD
-    export XUI_PANEL_BASE_PATH=$XUI_BASE_PATH
-    
-    log "Установка 3X-UI (это займёт 2-3 минуты)..."
-    yes "" | bash /tmp/x-ui-install.sh >/dev/null 2>&1
-    rm -f /tmp/x-ui-install.sh
-    unset XUI_PANEL_PORT XUI_PANEL_USERNAME XUI_PANEL_PASSWORD XUI_PANEL_BASE_PATH
-
-    # Настраиваем SSL
-    log "Настройка SSL сертификата..."
-    
-    # Получаем IPv4 адрес (для SSL сертификата)
-    EXTERNAL_IP=$(curl -s -4 ifconfig.me 2>/dev/null || curl -s ifconfig.me 2>/dev/null || echo "")
-    
-    if [ -z "$EXTERNAL_IP" ] || [[ "$EXTERNAL_IP" == *":"* ]]; then
-        # Если нет IPv4, используем IPv6 (без SSL)
-        log_warning "IPv4 не найден, используем IPv6 (SSL не настраивается)"
-        EXTERNAL_IP=$(curl -s ifconfig.me 2>/dev/null || echo "unknown")
-        
-        cat > $INSTALL_DIR/xui_credentials.txt << EOF
-════════════════════════════════════════════════════════
-  🔐 3X-UI PANEL CREDENTIALS
-════════════════════════════════════════════════════════
-  URL:      http://$EXTERNAL_IP:$XUI_PORT/$XUI_BASE_PATH
-  Username: $XUI_USERNAME
-  Password: $XUI_PASSWORD
-  
-  ⚠️  IPv6 - SSL не настроен (используйте HTTP или настройте домен)
-  ⚠️  СОХРАНИТЕ ЭТИ ДАННЫЕ!
-════════════════════════════════════════════════════════
-EOF
-        log_success "3X-UI установлена (без SSL)"
-    else
-        # IPv4 найден - настраиваем SSL
-        log "  Внешний IP: $EXTERNAL_IP (IPv4)"
-        
-        if ! command -v ~/.acme.sh/acme.sh &> /dev/null; then
-            curl https://get.acme.sh | sh &>/dev/null
-            source ~/.bashrc
-        fi
-        
-        log "  Выпуск SSL сертификата..."
-        ~/.acme.sh/acme.sh --issue --standalone -d $EXTERNAL_IP --listen-v4 --force &>/dev/null
-        
-        if [ $? -eq 0 ]; then
-            ~/.acme.sh/acme.sh --install-cert -d $EXTERNAL_IP \
-                --key-file /root/private.key \
-                --fullchain-file /root/cert.crt \
-                --reloadcmd "systemctl force-reload x-ui" &>/dev/null
-            
-            /usr/local/x-ui/x-ui cert -s &>/dev/null
-            
-            cat > $INSTALL_DIR/xui_credentials.txt << EOF
-════════════════════════════════════════════════════════
-  🔐 3X-UI PANEL CREDENTIALS
-════════════════════════════════════════════════════════
-  URL:      https://$EXTERNAL_IP:$XUI_PORT/$XUI_BASE_PATH
-  Username: $XUI_USERNAME
-  Password: $XUI_PASSWORD
-  
-  ⚠️  СОХРАНИТЕ ЭТИ ДАННЫЕ!
-════════════════════════════════════════════════════════
-EOF
-            log_success "3X-UI установлена + SSL настроен"
-        else
-            log_warning "Не удалось получить SSL сертификат"
-            cat > $INSTALL_DIR/xui_credentials.txt << EOF
-════════════════════════════════════════════════════════
-  🔐 3X-UI PANEL CREDENTIALS
-════════════════════════════════════════════════════════
-  URL:      http://$EXTERNAL_IP:$XUI_PORT/$XUI_BASE_PATH
-  Username: $XUI_USERNAME
-  Password: $XUI_PASSWORD
-  
-  ⚠️  SSL не настроен (используйте HTTP)
-  ⚠️  СОХРАНИТЕ ЭТИ ДАННЫЕ!
-════════════════════════════════════════════════════════
-EOF
-        fi
-    fi
-
-    log "🔐 Учётные данные: $INSTALL_DIR/xui_credentials.txt"
-    
-    export XUI_PORT=$XUI_PORT
-    export XUI_USERNAME=$XUI_USERNAME
-    export XUI_PASSWORD=$XUI_PASSWORD
-    export EXTERNAL_IP=$EXTERNAL_IP
-    export XUI_BASE_PATH=$XUI_BASE_PATH
 }
 
 # =============================================================================
@@ -409,6 +264,7 @@ create_env() {
     echo "   📌 Пример: 1234567890:ABCdefGHIjklMNOpqrsTUVwxyz"
     echo ""
     
+    # Запрашиваем токен с проверкой
     while true; do
         read -p "🔑 Введите токен бота: " USER_TOKEN
         if [[ "$USER_TOKEN" == *":"* ]] && [ ${#USER_TOKEN} -ge 40 ]; then
@@ -426,6 +282,7 @@ create_env() {
     echo "   📌 Пример: 123456789"
     echo ""
     
+    # Запрашиваем ID с проверкой
     while true; do
         read -p "🔑 Введите ваш Telegram ID: " USER_ID
         if [[ "$USER_ID" =~ ^[0-9]+$ ]]; then
@@ -452,6 +309,9 @@ create_env() {
     
     read -p "🏷️ Название бота: " USER_BOT_NAME
     [ -z "$USER_BOT_NAME" ] && USER_BOT_NAME="BOTinok"
+    
+    # Получаем порт 3X-UI если установлен
+    XUI_PORT="${XUI_PORT:-62050}"
     
     # Создаём .env файл
     cat > $INSTALL_DIR/.env << EOF
@@ -538,72 +398,6 @@ EOF
 }
 
 # =============================================================================
-# Создание systemd сервиса
-# =============================================================================
-create_service() {
-    log "Создание systemd сервиса..."
-
-    cat > /etc/systemd/system/$BOT_SERVICE_NAME.service << 'EOF'
-[Unit]
-Description=BOTinok - Telegram VPN Bot
-After=network.target
-Wants=network-online.target
-
-[Service]
-Type=simple
-User=root
-WorkingDirectory=/root/BOTinok
-
-Environment=PATH=/root/BOTinok/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-Environment=PYTHONUNBUFFERED=1
-Environment=PYTHONIOENCODING=utf-8
-Environment=PYTHONFAULTHANDLER=1
-
-ExecStart=/root/BOTinok/venv/bin/python -u /root/BOTinok/bot.py
-Restart=always
-RestartSec=10
-RestartPreventExitStatus=1
-
-StandardOutput=journal
-StandardError=journal
-SyslogIdentifier=botinok
-
-LimitNOFILE=65535
-Nice=-5
-NoNewPrivileges=false
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-    systemctl daemon-reload
-    systemctl enable $BOT_SERVICE_NAME
-    log_success "Systemd сервис создан"
-}
-
-# =============================================================================
-# Настройка брандмауэра
-# =============================================================================
-setup_firewall() {
-    log "Настройка брандмауэра UFW..."
-    
-    if ! command -v ufw &> /dev/null; then
-        apt-get install -y ufw
-    fi
-    
-    ufw allow 22/tcp
-    ufw allow 80/tcp
-    ufw allow 443/tcp
-    
-    if [ ! -z "$XUI_PORT" ]; then
-        ufw allow $XUI_PORT/tcp
-    fi
-    
-    echo "y" | ufw enable
-    log_success "Брандмауэр настроен"
-}
-
-# =============================================================================
 # Создание базы данных
 # =============================================================================
 create_database() {
@@ -612,7 +406,7 @@ create_database() {
     cd $INSTALL_DIR
     source venv/bin/activate
     
-    python << 'EOF'
+    python3 << 'PYEOF'
 import asyncio
 from aiosqlite import connect
 import os
@@ -690,62 +484,81 @@ async def create_db():
         )
     """)
     
-    # Таблица Wallets
-    await cursor.execute("""
-        CREATE TABLE IF NOT EXISTS Wallets (
-            id integer PRIMARY KEY AUTOINCREMENT,
-            isActive bool DEFAULT(1),
-            Name text NOT NULL,
-            API_Key_TOKEN text,
-            ShopID_CLIENT_ID text,
-            E_mail_URL text
-        )
-    """)
-    
-    # Таблица Otchet
-    await cursor.execute("""
-        CREATE TABLE IF NOT EXISTS Otchet (
-            id integer PRIMARY KEY AUTOINCREMENT NOT NULL,
-            date text NOT NULL,
-            prodleny integer NOT NULL DEFAULT(0),
-            off_key integer NOT NULL DEFAULT(0),
-            up_days integer NOT NULL DEFAULT(0),
-            change_protocol integer NOT NULL DEFAULT(0),
-            change_locations integer NOT NULL DEFAULT(0),
-            get_test_keys integer NOT NULL DEFAULT(0),
-            get_new_keys integer NOT NULL DEFAULT(0),
-            pay_donat integer NOT NULL DEFAULT(0),
-            pay_change_protocol integer NOT NULL DEFAULT(0),
-            pay_change_locations integer NOT NULL DEFAULT(0),
-            get_obesh integer NOT NULL DEFAULT(0),
-            call_donat integer NOT NULL DEFAULT(0),
-            opros_super integer NOT NULL DEFAULT(0),
-            opros_dop integer NOT NULL DEFAULT(0)
-        )
-    """)
-    
-    # Таблица Messages для логов
-    await cursor.execute("""
-        CREATE TABLE IF NOT EXISTS messages (
-            id integer PRIMARY KEY,
-            date text,
-            isBot bool NOT NULL DEFAULT(0),
-            chat_id integer NOT NULL DEFAULT(-1),
-            message_text text NOT NULL DEFAULT('---')
-        )
-    """)
-    
     await conn.commit()
     await conn.close()
-    print("База данных создана:", db_path)
+    print("База данных создана: data/db.db")
 
-if __name__ == '__main__':
-    asyncio.run(create_db())
-EOF
+asyncio.run(create_db())
+PYEOF
     
-    deactivate
+    deactivate 2>/dev/null || true
     cd - > /dev/null
     log_success "База данных создана"
+}
+
+# =============================================================================
+# Создание systemd сервиса
+# =============================================================================
+create_service() {
+    log "Создание systemd сервиса..."
+
+    cat > /etc/systemd/system/$BOT_SERVICE_NAME.service << 'EOF'
+[Unit]
+Description=BOTinok - Telegram VPN Bot
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/BOTinok
+
+Environment=PATH=/root/BOTinok/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONIOENCODING=utf-8
+
+ExecStart=/root/BOTinok/venv/bin/python /root/BOTinok/bot.py
+Restart=always
+RestartSec=10
+RestartPreventExitStatus=1
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=botinok
+
+LimitNOFILE=65535
+Nice=-5
+NoNewPrivileges=false
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+    systemctl daemon-reload || { log_error "Не удалось обновить systemd"; exit 1; }
+    systemctl enable $BOT_SERVICE_NAME || log_warning "Не удалось включить сервис"
+    log_success "Systemd сервис создан"
+}
+
+# =============================================================================
+# Настройка брандмауэра
+# =============================================================================
+setup_firewall() {
+    log "Настройка брандмауэра UFW..."
+
+    if ! command -v ufw &> /dev/null; then
+        apt-get install -y ufw || log_warning "Не удалось установить ufw"
+    fi
+
+    ufw allow 22/tcp || true
+    ufw allow 80/tcp || true
+    ufw allow 443/tcp || true
+
+    if [ ! -z "$XUI_PORT" ]; then
+        ufw allow $XUI_PORT/tcp || true
+    fi
+
+    echo "y" | ufw enable 2>/dev/null || log_warning "Не удалось включить брандмауэр"
+    log_success "Брандмауэр настроен"
 }
 
 # =============================================================================
@@ -766,7 +579,7 @@ echo "Backup completed: $DATE"
 EOF
     
     chmod +x $INSTALL_DIR/backup.sh
-    (crontab -l 2>/dev/null; echo "0 3 * * * $INSTALL_DIR/backup.sh") | crontab -
+    (crontab -l 2>/dev/null; echo "0 3 * * * $INSTALL_DIR/backup.sh") | crontab - || log_warning "Не удалось настроить cron"
     log_success "Cron задачи настроены"
 }
 
@@ -775,7 +588,7 @@ EOF
 # =============================================================================
 start_bot() {
     log "Запуск бота..."
-    systemctl start $BOT_SERVICE_NAME
+    systemctl start $BOT_SERVICE_NAME || { log_error "Не удалось запустить бота"; return 1; }
     sleep 5
     
     if systemctl is-active --quiet $BOT_SERVICE_NAME; then
@@ -783,24 +596,7 @@ start_bot() {
         return 0
     else
         log_error "Не удалось запустить бота"
-        log "Получение информации об ошибке..."
-        
-        # Получаем последние логи
-        ERROR_LOG=$(journalctl -u bot -n 20 --no-pager 2>/dev/null | tail -10)
-        
-        if [[ "$ERROR_LOG" == *"ModuleNotFoundError"* ]]; then
-            log_error "Отсутствуют модули Python!"
-            log "Попробуйте: cd $INSTALL_DIR && source venv/bin/activate && pip install -r requirements.txt"
-        elif [[ "$ERROR_LOG" == *"TOKEN_MAIN"* ]]; then
-            log_error "Не указан токен бота в .env!"
-            log "Отредактируйте: nano $INSTALL_DIR/.env"
-        elif [[ "$ERROR_LOG" == *"MY_ID_TELEG"* ]]; then
-            log_error "Не указан ID администратора в .env!"
-            log "Отредактируйте: nano $INSTALL_DIR/.env"
-        fi
-        
-        log "Последние логи:"
-        echo "$ERROR_LOG"
+        log "Проверьте логи: journalctl -u bot -f"
         return 1
     fi
 }
@@ -809,7 +605,7 @@ start_bot() {
 # Вывод итогов
 # =============================================================================
 print_summary() {
-    EXTERNAL_IP=$(curl -s ifconfig.me)
+    EXTERNAL_IP=$(curl -s ifconfig.me 2>/dev/null || echo "unknown")
     
     echo ""
     echo "╔═══════════════════════════════════════════════════════╗"
@@ -827,7 +623,7 @@ print_summary() {
     echo "✅ Файл .env создан и заполнен"
     echo "✅ Виртуальное окружение Python создано"
     echo "✅ Зависимости установлены"
-    echo "✅ 3X-UI панель установлена"
+    echo "✅ База данных создана"
     echo "✅ Systemd сервис создан"
     echo "✅ Брандмауэр настроен"
     echo ""
@@ -835,17 +631,8 @@ print_summary() {
     if systemctl is-active --quiet $BOT_SERVICE_NAME; then
         echo "✅ Бот ЗАПУЩЕН и работает"
     else
-        echo "⚠️  Бот требует перезапуска после проверки .env"
-    fi
-    
-    echo ""
-    echo "═══════════════════════════════════════════════════════"
-    echo "  🔐 3X-UI ПАНЕЛЬ"
-    echo "═══════════════════════════════════════════════════════"
-    
-    if [ -f $INSTALL_DIR/xui_credentials.txt ]; then
-        echo ""
-        cat $INSTALL_DIR/xui_credentials.txt
+        echo "⚠️  Бот требует перезапуска"
+        echo "   Выполните: systemctl restart bot"
     fi
     
     echo ""
@@ -862,24 +649,17 @@ print_summary() {
     echo "  📚 ДОКУМЕНТАЦИЯ"
     echo "═══════════════════════════════════════════════════════"
     echo ""
-    echo "   GitHub: https://github.com/ShavlaK/BOTinok"
-    echo "   Docs: https://github.com/ShavlaK/BOTinok#readme"
-    echo "   Help: https://github.com/ShavlaK/BOTinok/blob/main/TROUBLESHOOTING.md"
+    echo "   GitHub:      https://github.com/ShavlaK/BOTinok"
+    echo "   Docs:        https://github.com/ShavlaK/BOTinok#readme"
+    echo "   Troubleshoot: https://github.com/ShavlaK/BOTinok/blob/main/TROUBLESHOOTING.md"
     echo ""
     echo "═══════════════════════════════════════════════════════"
     echo ""
     echo "💡 СЛЕДУЮЩИЕ ДЕЙСТВИЯ:"
     echo ""
-    echo "1. Проверьте файл .env:"
-    echo "   nano $INSTALL_DIR/.env"
-    echo ""
-    echo "2. Если всё верно, перезапустите бота:"
-    echo "   systemctl restart bot"
-    echo ""
-    echo "3. Проверьте статус:"
-    echo "   systemctl status bot"
-    echo ""
-    echo "4. Откройте бота в Telegram и нажмите /start"
+    echo "1. Откройте @botinocheck1_bot в Telegram"
+    echo "2. Нажмите /start"
+    echo "3. Бот должен ответить!"
     echo ""
     echo "✅ Всё готово к использованию!"
     echo ""
@@ -891,7 +671,7 @@ print_summary() {
 main() {
     show_banner
     check_root
-    cleanup_apt          # Очистка apt lock
+    cleanup_apt
     check_ubuntu_version
     check_server
     update_system
@@ -899,9 +679,8 @@ main() {
     create_project_dir
     download_bot_files
     install_python_deps
-    install_xui
     create_env
-    create_database      # Создание базы данных
+    create_database
     create_service
     setup_firewall
     setup_cron
